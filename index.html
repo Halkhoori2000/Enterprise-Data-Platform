@@ -79,7 +79,7 @@
       <span><i style="background:#3fb950"></i>Consume</span><span><i style="background:#f47067"></i>Security</span>
       <span><i style="background:#d2a8ff"></i>Governance</span>
     </div>
-    <div class="lg-flow"><svg width="46" height="10"><path d="M2 5h38" stroke="#9fb6d4" stroke-width="3" class="flowline"/></svg> data flow: ① capture → ② refine → ③ publish → ④ decide</div>
+    <div class="lg-flow"><svg width="72" height="10"><path d="M2 5h62" stroke="#9fb6d4" stroke-width="3" class="flowline"/></svg> data flow: ① capture → ② refine → ③ publish → ④ decide</div>
     <div class="lg-ladder"><b>L0</b> landscape <span>›</span> <b>L1</b> planes &amp; tools <span>›</span> <b>L2</b> inside each tool <span>›</span> <b>L3</b> mechanics <span>›</span> <b>L4</b> the logs</div>
     <div class="lg-note">Every card is clickable — the map flies to it. Live demos at L3/L4 inside Kafka, Delta Lake and Spark. Click “A record's journey” (bottom) for a guided tour.</div>
   </div>
@@ -479,7 +479,7 @@ function drawNode(parent, x, y, node, zone, W){
   const descLines = linesOf(node.desc, descSize, W - 40);
   let h = headH + 14 + descLines * descSize * 1.34 + 16;
   const l2 = node.l2 || [];
-  const miniW = (W - 40 - 12) / 2, miniT = 7.4, miniB = 5.8;
+  const miniW = (W - 40 - 12) / 2, miniT = 8.2, miniB = 6.4;
   const miniHs = l2.map(c => 10 + miniT*1.3 + 4 + linesOf(c[1], miniB, miniW - 16) * miniB * 1.35 + 8);
   let l2h = 0;
   if (l2.length){
@@ -1118,6 +1118,7 @@ if (qp.has("w")){
   vb = { x:-260, y:-140, w: worldW * 1.3 }; apply();
   setTimeout(() => fitAll(), 250);
 }
+if (qp.has("tour")) setTimeout(startTour, 700);
 if (qp.has("run")) setTimeout(() => {
   document.querySelectorAll("g.playbtn").forEach(b => b.dispatchEvent(new Event("click")));
 }, 500);
