@@ -24,6 +24,12 @@
   .hudbtn.wide { width: auto; padding: 0 14px; font-size: 0.78rem; }
   .hudbtn:hover { border-color: #58a6ff; }
   #zoomlvl { font-size: 0.72rem; color: var(--muted); background: rgba(19,25,36,0.92); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
+  #tour { display: none; position: absolute; left: 50%; transform: translateX(-50%); bottom: 22px; z-index: 30;
+    width: min(620px, 90%); background: rgba(13,20,32,0.95); border: 1px solid #2f9e57; border-radius: 14px; padding: 16px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+  #tour-step { font-size: 0.7rem; color: #56d364; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 6px; }
+  #tour-text { font-size: 0.92rem; color: var(--text); margin-bottom: 12px; }
+  .tour-btns { display: flex; gap: 8px; }
   #errbar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 50; background: #67060c; color: #ffd7d5; font-size: 0.75rem; padding: 6px 14px; }
   footer { background: rgba(19,25,36,0.9); border-top: 1px solid #1c2433; text-align: center; padding: 7px; color: var(--dim); font-size: 0.7rem; z-index: 10; }
   text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -50,6 +56,11 @@
     <button class="hudbtn" id="z-in">＋</button>
     <button class="hudbtn" id="z-out">－</button>
     <button class="hudbtn wide" id="z-fit">fit</button>
+  </div>
+  <div id="tour">
+    <div id="tour-step"></div>
+    <div id="tour-text"></div>
+    <div class="tour-btns"><button class="hudbtn wide" id="tour-next">next ▸</button><button class="hudbtn wide" id="tour-end">✕ end tour</button></div>
   </div>
   <div class="hud bl" id="hint">drag = move · scroll / pinch = zoom · double-click = dive · click a card = fly to it · esc = whole map</div>
 </div>
@@ -205,6 +216,7 @@ const world = el("g", {}, svg);
 
 /* ═══════ LOD ═══════ */
 const lod = [];
+const POS = {};
 function lodGroup(parent, minK, maxK){
   const g = el("g", { opacity:0 }, parent);
   g.style.pointerEvents = "none";
@@ -397,7 +409,7 @@ const DATA = {
       desc:"Isolated environments provisioned end-to-end by Terraform + CI/CD: streaming, lake, processing, catalog, SQL — the whole architecture, miniaturised. Quotas, budget alerts, auto-suspension built in." },
     { name:"How a delivery runs", icon:"i-clock", stats:"discovery → design → build → test → go-live",
       desc:"Requirements traced to sources; data models agreed before pipelines; SIT → UAT → pre-prod; then a parallel run until the numbers agree — go-live is a comparison, not a leap." },
-    { name:"A record's journey", icon:"i-coin", stats:"card tap → CDC → topic → Bronze → Silver → Gold → dashboard",
+    { name:"A record's journey", icon:"i-coin", tour:true, stats:"card tap → CDC → topic → Bronze → Silver → Gold → dashboard",
       desc:"One payment: the core writes a row; CDC captures it; keyed to a partition; landed in Bronze with lineage; typed in Silver; aggregated in Gold; the dashboard moves. Seven hops, zero manual steps." },
   ],
 };
@@ -448,6 +460,7 @@ function drawNode(parent, x, y, node, zone, W){
   }
   const special = node.kafka ? 585 : node.delta ? 400 : node.spark ? 345 : 0;
   const totalH = h + l2h + special;
+  POS[node.name] = { x, y, w: W, h: totalH };
 
   const card = rect(parent, x, y, W, totalH, "url(#gr-" + (node.journey ? "journey" : zone) + ")", Z.border, 12, { filter:"url(#sh2)" });
   card.classList.add("card","clickable");
@@ -740,15 +753,18 @@ DATA.columns.forEach((col, ci) => {
   colBottoms.push(y);
   /* low-zoom chip list */
   const chipG = lodGroup(midLayer, 0, 0.34);
-  const chips = col.lanes.flatMap(l => l.nodes).slice(0, 7);
-  let cy = COLTOP + 130;
+  const chips = col.lanes.flatMap(l => l.nodes);
+  const availH = (y - 40) - (COLTOP + 140);
+  const step = Math.max(84, Math.min(150, availH / chips.length));
+  let cy = COLTOP + 140;
   for (const n of chips){
-    const w = Math.min(NODEW * 2 + PAD, n.name.length * 16 + 92);
-    rect(chipG, gx, cy, w, 58, blend(Z.acc, BASE, 0.07), blend(Z.acc, BORDER, 0.25), 12);
-    iconChip(chipG, gx + 30, cy + 29, 14, n.icon || "i-gear", Z.acc);
-    txt(chipG, gx + 52, cy + 37, n.name, 25, blend(Z.acc, "#ffffff", 0.82), { w:"600" });
-    cy += 74;
+    const w = Math.min(NODEW * 2 + PAD, n.name.length * 17 + 110);
+    rect(chipG, gx, cy, w, 66, blend(Z.acc, BASE, 0.07), blend(Z.acc, BORDER, 0.25), 14);
+    iconChip(chipG, gx + 33, cy + 33, 16, n.icon || "i-gear", Z.acc);
+    txt(chipG, gx + 58, cy + 42, n.name, 27, blend(Z.acc, "#ffffff", 0.85), { w:"600" });
+    cy += step;
   }
+  txt(chipG, gx, Math.min(cy + 26, y - 20), "⌕ zoom in to open " + col.name.toLowerCase(), 20, blend(Z.acc, "#ffffff", 0.45), { w:"600" });
   colX += COLW + GUTTER;
 });
 
@@ -828,6 +844,11 @@ for (const rail of DATA.rails){
     const Z = ZONES.journey;
     const card = rect(world, jx, jy, jw, 310, "url(#gr-journey)", blend(Z.acc, BORDER, 0.35), 14, { filter:"url(#sh)" });
     card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
+    if (j.tour){
+      card.classList.add("clickable");
+      card.addEventListener("click", startTour);
+      txt(world, jx + 20, jy + 228, "▶ click for a guided tour across the map", 13, "#7ee2a8", { w:"650" });
+    }
     iconChip(world, jx + 34, jy + 38, 17, j.icon, Z.acc);
     txt(world, jx + 62, jy + 45, j.name, 23, TXT, { w:"700" });
     el("circle", { cx: jx + jw - 28, cy: jy + 34, r: 13, fill: blend(Z.acc, BASE, 0.25) }, world);
@@ -873,6 +894,47 @@ for (const rail of DATA.rails){
   });
   txt(world, lx + 26, ly + 226, "Every card is clickable — the map flies to it. Interactive demos live at L3/L4 inside Kafka, Delta Lake and Spark.", 14, DIM, { maxw: lw - 52 });
 }
+
+/* =============== guided tour =============== */
+const TOUR = [
+  ["Core banking", "23:41 - a customer taps their card. The core banking system writes one database row. Nobody will touch this record by hand again."],
+  ["Confluent Kafka", "Within moments, CDC reads the change from the database's own log and publishes it as an event - keyed by account, so this account's events stay in perfect order."],
+  ["Delta Lake", "A sink connector lands it in Bronze - exactly as produced, with lineage stamped: system, file, time. Raw is sacred."],
+  ["Silver", "Conformance: typed, deduplicated, mapped to the enterprise model. The record now speaks the bank's one shared language."],
+  ["Gold", "Aggregation: it joins the day's spending metrics and risk features - business meaning, applied last."],
+  ["Databricks SQL", "The warehouse serves the updated Gold table - no copies, straight off the lakehouse."],
+  ["Power BI + Copilot", "...and the dashboard tile moves. Seven hops, zero manual steps, full lineage - the platform's whole promise in one record."],
+];
+let tourIdx = -1, tourTimer = null;
+function showTourStep(){
+  const step = TOUR[tourIdx];
+  const p = POS[step[0]];
+  if (p) flyTo(p.x - p.w * 0.55, p.y - p.h * 0.25, p.w * 2.2);
+  document.getElementById("tour-step").textContent = "A RECORD'S JOURNEY - STOP " + (tourIdx + 1) + " OF " + TOUR.length + " : " + step[0].toUpperCase();
+  document.getElementById("tour-text").textContent = step[1];
+  document.getElementById("tour-next").textContent = tourIdx === TOUR.length - 1 ? "finish" : "next";
+  clearTimeout(tourTimer);
+  tourTimer = setTimeout(nextTourStep, 7000);
+}
+function nextTourStep(){
+  tourIdx++;
+  if (tourIdx >= TOUR.length) return endTour();
+  showTourStep();
+}
+function startTour(e){
+  if (e) e.stopPropagation();
+  document.getElementById("tour").style.display = "block";
+  tourIdx = -1;
+  nextTourStep();
+}
+function endTour(){
+  clearTimeout(tourTimer);
+  document.getElementById("tour").style.display = "none";
+  tourIdx = -1;
+  fitAll();
+}
+document.getElementById("tour-next").addEventListener("click", nextTourStep);
+document.getElementById("tour-end").addEventListener("click", endTour);
 
 /* ═══════ viewport ═══════ */
 let vb = { x:0, y:0, w: worldW };
