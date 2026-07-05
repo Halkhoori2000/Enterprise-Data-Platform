@@ -24,6 +24,9 @@
   .hudbtn.wide { width: auto; padding: 0 14px; font-size: 0.78rem; }
   .hudbtn:hover { border-color: #58a6ff; }
   #zoomlvl { font-size: 0.72rem; color: var(--muted); background: rgba(19,25,36,0.92); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
+  #minimap { position: absolute; left: 14px; bottom: 52px; z-index: 24; width: 224px; background: rgba(13,20,32,0.9);
+    border: 1px solid var(--border); border-radius: 10px; padding: 6px; cursor: crosshair; }
+  #minimap svg { display: block; width: 100%; height: auto; }
   #legend { position: absolute; right: 14px; bottom: 14px; z-index: 25; width: 330px; background: rgba(13,20,32,0.94);
     border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 34px rgba(0,0,0,0.55); }
   #legend .lg-title { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; color: var(--text); margin-bottom: 9px; }
@@ -85,6 +88,7 @@
     <div id="tour-text"></div>
     <div class="tour-btns"><button class="hudbtn wide" id="tour-next">next ▸</button><button class="hudbtn wide" id="tour-end">✕ end tour</button></div>
   </div>
+  <div id="minimap"></div>
   <div class="hud bl" id="hint">drag = move · scroll / pinch = zoom · double-click = dive · click a card = fly to it · esc = whole map</div>
 </div>
 <footer>Hamdan Alkhoori · An explorable, generalized model of an enterprise banking data platform — tool internals are public engineering knowledge; deliveries link to their case studies.</footer>
@@ -240,6 +244,7 @@ const world = el("g", {}, svg);
 /* ═══════ LOD ═══════ */
 const lod = [];
 const POS = {};
+const FRAMES = [];
 function lodGroup(parent, minK, maxK){
   const g = el("g", { opacity:0 }, parent);
   g.style.pointerEvents = "none";
@@ -816,6 +821,7 @@ const maxColBottom = Math.max(...colBottoms) + 40;
     const colH = colBottoms[ci] - COLTOP + 60;
     el("ellipse", { cx: fx - 34 + COLW/2, cy: COLTOP + colH*0.45, rx: COLW*0.75, ry: colH*0.6, fill: "url(#glow-" + col.id + ")" }, bgLayer);
     const frame = rect(bgLayer, fx - 34, COLTOP - 10, COLW, colH, blend(Z.acc, BG, 0.028), blend(Z.acc, BORDER, 0.28), 20, { filter:"url(#sh)" });
+    FRAMES.push({ x: fx - 34, y: COLTOP - 10, w: COLW, h: colH, c: Z.acc });
     /* banner */
     rect(bgLayer, fx - 34, COLTOP - 10, COLW, 92, "url(#grb-" + col.id + ")", "none", 20);
     rect(bgLayer, fx - 34, COLTOP + 58, COLW, 24, "url(#grb-" + col.id + ")", "none", 0);
@@ -848,6 +854,7 @@ let railY = maxColBottom + 120;
 for (const rail of DATA.rails){
   const Z = ZONES[rail.id];
   rect(bgLayer, 106, railY, worldW - 246, 340, blend(Z.acc, BG, 0.035), blend(Z.acc, BORDER, 0.3), 18, { filter:"url(#sh)" });
+  FRAMES.push({ x: 106, y: railY, w: worldW - 246, h: 340, c: Z.acc });
   rect(bgLayer, 106, railY, 14, 340, Z.acc, "none", 7);
   el("circle", { cx: 168, cy: railY + 56, r: 26, fill: blend(Z.acc, BASE, 0.18) }, world);
   icon(world, 150, railY + 38, 36, rail.icon, Z.acc);
@@ -883,6 +890,7 @@ for (const rail of DATA.rails){
     const jx = 140 + i * (jw + 40), jy = railY + 66;
     const Z = ZONES.journey;
     const card = rect(world, jx, jy, jw, 310, "url(#gr-journey)", blend(Z.acc, BORDER, 0.35), 14, { filter:"url(#sh)" });
+    if (i === 0) FRAMES.push({ x: 140, y: jy, w: worldW - 280, h: 310, c: "#56d364" });
     card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
     if (j.tour){
       card.classList.add("clickable");
@@ -959,6 +967,7 @@ function apply(){
   updateLOD(k);
   const lvl = k < 0.5 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 7.5 ? "L3 · internals" : "L4 · the logs themselves";
   document.getElementById("zoomlvl").textContent = "zoom " + k.toFixed(2) + "× — " + lvl;
+  if (typeof updateMinimap === "function" && window.__mmReady) updateMinimap();
 }
 const clampW = w => Math.min(worldW * 1.2, Math.max(vw() / KMAX, w));
 function zoomAt(px, py, f){
@@ -1024,11 +1033,37 @@ document.getElementById("z-out").onclick = () => { const r = wrapEl.getBoundingC
 document.getElementById("z-fit").onclick = fitAll;
 document.addEventListener("keydown", e => { if (e.key === "Escape") fitAll(); });
 window.addEventListener("resize", apply);
+/* minimap */
+const mmWrap = document.getElementById("minimap");
+const worldH = railY + 60;
+const mmW = 212, mmScale = mmW / (worldW + 120), mmH = Math.round((worldH + 80) * mmScale);
+const mm = el("svg", { viewBox: "0 0 " + mmW + " " + mmH, width: mmW, height: mmH }, mmWrap);
+rect(mm, 0, 0, mmW, mmH, "#0a0e14", "none", 4);
+FRAMES.forEach(f => {
+  rect(mm, (f.x + 60) * mmScale, (f.y + 40) * mmScale, f.w * mmScale, f.h * mmScale, blend(f.c, "#0a0e14", 0.28), "none", 2);
+});
+const mmView = rect(mm, 0, 0, 10, 10, "none", "#e6edf3", 1.5, { sw: 1.2 });
+function updateMinimap(){
+  const h = vb.w * vh() / vw();
+  mmView.setAttribute("x", (vb.x + 60) * mmScale);
+  mmView.setAttribute("y", (vb.y + 40) * mmScale);
+  mmView.setAttribute("width", vb.w * mmScale);
+  mmView.setAttribute("height", h * mmScale);
+}
+mmWrap.addEventListener("click", e => {
+  const r = mmWrap.getBoundingClientRect();
+  const wx = (e.clientX - r.left - 6) / mmScale - 60;
+  const wy = (e.clientY - r.top - 6) / mmScale - 40;
+  flyTo(wx - vb.w / 2, wy - (vb.w * vh() / vw()) / 2, vb.w);
+});
+
 document.getElementById("z-legend").onclick = () => {
   const L = document.getElementById("legend");
   L.style.display = L.style.display === "none" ? "block" : "none";
 };
-vb = { x:-60, y:-40, w: worldW * 1.04 }; apply();
+window.__mmReady = true;
+vb = { x:-260, y:-140, w: worldW * 1.3 }; apply();
+setTimeout(() => fitAll(), 250);
 })();
 </script>
 </body>
