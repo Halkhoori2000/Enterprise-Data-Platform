@@ -24,6 +24,16 @@
   .hudbtn.wide { width: auto; padding: 0 14px; font-size: 0.78rem; }
   .hudbtn:hover { border-color: #58a6ff; }
   #zoomlvl { font-size: 0.72rem; color: var(--muted); background: rgba(19,25,36,0.92); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
+  #legend { position: absolute; right: 14px; bottom: 14px; z-index: 25; width: 330px; background: rgba(13,20,32,0.94);
+    border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; box-shadow: 0 10px 34px rgba(0,0,0,0.55); }
+  #legend .lg-title { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; color: var(--text); margin-bottom: 9px; }
+  #legend .lg-zones { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+  #legend .lg-zones span { font-size: 0.72rem; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  #legend .lg-zones i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  #legend .lg-flow { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 7px; margin-bottom: 10px; }
+  #legend .lg-ladder { font-size: 0.72rem; color: var(--muted); margin-bottom: 9px; }
+  #legend .lg-ladder b { color: #79c0ff; } #legend .lg-ladder span { color: var(--dim); padding: 0 2px; }
+  #legend .lg-note { font-size: 0.68rem; color: var(--dim); line-height: 1.5; }
   #tour { display: none; position: absolute; left: 50%; transform: translateX(-50%); bottom: 22px; z-index: 30;
     width: min(620px, 90%); background: rgba(13,20,32,0.95); border: 1px solid #2f9e57; border-radius: 14px; padding: 16px 20px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
@@ -56,6 +66,19 @@
     <button class="hudbtn" id="z-in">＋</button>
     <button class="hudbtn" id="z-out">－</button>
     <button class="hudbtn wide" id="z-fit">fit</button>
+    <button class="hudbtn wide" id="z-legend">legend</button>
+  </div>
+  <div id="legend">
+    <div class="lg-title">READING THIS MAP</div>
+    <div class="lg-zones">
+      <span><i style="background:#2dd4bf"></i>Sources</span><span><i style="background:#58a6ff"></i>Ingest</span>
+      <span><i style="background:#f0883e"></i>Process</span><span><i style="background:#a371f7"></i>Serve</span>
+      <span><i style="background:#3fb950"></i>Consume</span><span><i style="background:#f47067"></i>Security</span>
+      <span><i style="background:#d2a8ff"></i>Governance</span>
+    </div>
+    <div class="lg-flow"><svg width="46" height="10"><path d="M2 5h38" stroke="#9fb6d4" stroke-width="3" class="flowline"/></svg> data flow: ① capture → ② refine → ③ publish → ④ decide</div>
+    <div class="lg-ladder"><b>L0</b> landscape <span>›</span> <b>L1</b> planes &amp; tools <span>›</span> <b>L2</b> inside each tool <span>›</span> <b>L3</b> mechanics <span>›</span> <b>L4</b> the logs</div>
+    <div class="lg-note">Every card is clickable — the map flies to it. Live demos at L3/L4 inside Kafka, Delta Lake and Spark. Click “A record's journey” (bottom) for a guided tour.</div>
   </div>
   <div id="tour">
     <div id="tour-step"></div>
@@ -492,7 +515,7 @@ function drawNode(parent, x, y, node, zone, W){
       if (col === 1 || i === l2.length - 1){ my += rowH + 8; rowH = 0; }
       col = 1 - col;
     });
-    const aff = lodGroup(parent, 0.55, 2.1);
+    const aff = lodGroup(parent, 0.7, 2.1);
     txt(aff, x + W - 20, y + totalH - 14, "⌕ zoom for internals", 10.5, Z.acc, { anchor:"end", w:"600" });
   }
   if (node.kafka) deepKafka(parent, x + 20, y + h + l2h, W - 40, Z);
@@ -723,7 +746,7 @@ DATA.columns.forEach((col, ci) => {
   const Z = ZONES[col.id];
   /* content */
   let y = COLTOP + 120;
-  const laneG = lodGroup(midLayer, 0.34);
+  const laneG = lodGroup(midLayer, 0.5);
   for (const lane of col.lanes){
     el("circle", { cx: gx + 5, cy: y + 9, r: 4, fill: Z.acc }, laneG);
     txt(laneG, gx + 18, y + 14, lane.title.toUpperCase(), 14.5, blend(Z.acc, "#ffffff", 0.75), { ls:"0.12em", w:"700" });
@@ -752,16 +775,16 @@ DATA.columns.forEach((col, ci) => {
   }
   colBottoms.push(y);
   /* low-zoom chip list */
-  const chipG = lodGroup(midLayer, 0, 0.34);
+  const chipG = lodGroup(midLayer, 0, 0.5);
   const chips = col.lanes.flatMap(l => l.nodes);
   const availH = (y - 40) - (COLTOP + 140);
   const step = Math.max(84, Math.min(150, availH / chips.length));
   let cy = COLTOP + 140;
   for (const n of chips){
-    const w = Math.min(NODEW * 2 + PAD, n.name.length * 17 + 110);
-    rect(chipG, gx, cy, w, 66, blend(Z.acc, BASE, 0.07), blend(Z.acc, BORDER, 0.25), 14);
-    iconChip(chipG, gx + 33, cy + 33, 16, n.icon || "i-gear", Z.acc);
-    txt(chipG, gx + 58, cy + 42, n.name, 27, blend(Z.acc, "#ffffff", 0.85), { w:"600" });
+    const w = Math.min(NODEW * 2 + PAD, n.name.length * 19 + 120);
+    rect(chipG, gx, cy, w, 72, blend(Z.acc, BASE, 0.07), blend(Z.acc, BORDER, 0.25), 14);
+    iconChip(chipG, gx + 35, cy + 36, 17, n.icon || "i-gear", Z.acc);
+    txt(chipG, gx + 62, cy + 44, n.name, 32, blend(Z.acc, "#ffffff", 0.88), { w:"650" });
     cy += step;
   }
   txt(chipG, gx, Math.min(cy + 26, y - 20), "⌕ zoom in to open " + col.name.toLowerCase(), 20, blend(Z.acc, "#ffffff", 0.45), { w:"600" });
@@ -813,21 +836,21 @@ for (const rail of DATA.rails){
   icon(world, 150, railY + 38, 36, rail.icon, Z.acc);
   txt(world, 212, railY + 50, rail.name.toUpperCase(), 34, blend(Z.acc, "#ffffff", 0.85), { w:"800", ls:"0.06em" });
   txt(world, 212, railY + 84, rail.desc, 17, MUT);
-  const rg = lodGroup(world, 0.34);
-  const rw = (worldW - 246 - 90 - 3 * 30) / 4;
+  const rg = lodGroup(world, 0.5);
+  const bandW = worldW - 246, rw = 1080, rgap = (bandW - 4 * rw) / 5;
   rail.nodes.forEach((n, i) => {
-    const rx = 150 + i * (rw + 30), ry = railY + 112;
-    const card = rect(rg, rx, ry, rw, 200, "url(#gr-" + rail.id + ")", blend(Z.acc, BORDER, 0.3), 12, { filter:"url(#sh2)" });
+    const rx = 106 + rgap + i * (rw + rgap), ry = railY + 108;
+    const card = rect(rg, rx, ry, rw, 208, "url(#gr-" + rail.id + ")", blend(Z.acc, BORDER, 0.3), 12, { filter:"url(#sh2)" });
     card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
-    iconChip(rg, rx + 26, ry + 26, 13, n.icon, Z.acc);
-    txt(rg, rx + 46, ry + 32, n.name, 18, TXT, { w:"650" });
-    txt(rg, rx + 16, ry + 60, n.desc, 12.5, MUT, { maxw: rw - 32 });
+    iconChip(rg, rx + 34, ry + 34, 18, n.icon, Z.acc);
+    txt(rg, rx + 62, ry + 42, n.name, 25, TXT, { w:"650" });
+    txt(rg, rx + 22, ry + 80, n.desc, 16, MUT, { maxw: rw - 44 });
     if (n.l2){
       const g2 = lodGroup(rg, 2.1);
-      let my = ry + 112;
+      let my = ry + 128;
       n.l2.forEach(c => {
-        txt(g2, rx + 16, my, "▸ " + c[0] + " — " + c[1], 6.2, MUT, { maxw: rw - 32 });
-        my += linesOf("▸ " + c[0] + " — " + c[1], 6.2, rw - 32) * 8.4 + 6;
+        txt(g2, rx + 22, my, "▸ " + c[0] + " — " + c[1], 9.5, MUT, { maxw: rw - 44 });
+        my += linesOf("▸ " + c[0] + " — " + c[1], 9.5, rw - 44) * 12.8 + 8;
       });
     }
   });
@@ -847,52 +870,23 @@ for (const rail of DATA.rails){
     if (j.tour){
       card.classList.add("clickable");
       card.addEventListener("click", startTour);
-      txt(world, jx + 20, jy + 228, "▶ click for a guided tour across the map", 13, "#7ee2a8", { w:"650" });
+      txt(world, jx + 24, jy + 230, "▶ click for a guided tour across the map", 16, "#7ee2a8", { w:"650" });
     }
-    iconChip(world, jx + 34, jy + 38, 17, j.icon, Z.acc);
-    txt(world, jx + 62, jy + 45, j.name, 23, TXT, { w:"700" });
-    el("circle", { cx: jx + jw - 28, cy: jy + 34, r: 13, fill: blend(Z.acc, BASE, 0.25) }, world);
-    txt(world, jx + jw - 28, jy + 40, String(i+1), 15, "#7ee2a8", { anchor:"middle", w:"800" });
+    iconChip(world, jx + 38, jy + 40, 20, j.icon, Z.acc);
+    txt(world, jx + 70, jy + 48, j.name, 30, TXT, { w:"750" });
+    el("circle", { cx: jx + jw - 32, cy: jy + 38, r: 16, fill: blend(Z.acc, BASE, 0.25) }, world);
+    txt(world, jx + jw - 32, jy + 45, String(i+1), 18, "#7ee2a8", { anchor:"middle", w:"800" });
     rect(world, jx + 20, jy + 66, jw - 40, 34, blend(Z.acc, BG, 0.08), "none", 8);
-    txt(world, jx + 34, jy + 88, j.stats, 13.5, GOLD, { w:"600" });
+    txt(world, jx + 34, jy + 90, j.stats, 17, GOLD, { w:"600" });
     const jg = lodGroup(world, 0.5);
-    txt(jg, jx + 22, jy + 128, j.desc, 13.5, MUT, { maxw: jw - 44 });
+    txt(jg, jx + 24, jy + 134, j.desc, 17, MUT, { maxw: jw - 48 });
     if (j.link){
       const a = el("a", { href: j.link.href, target:"_blank" }, jg);
       const lg = el("g", { class:"clickable" }, a);
       rect(lg, jx + 20, jy + 244, jw - 40, 42, blend(Z.acc, BG, 0.12), Z.acc, 10);
-      txt(lg, jx + jw/2, jy + 271, j.link.label, 15, "#7ee2a8", { anchor:"middle", w:"650" });
+      txt(lg, jx + jw/2, jy + 272, j.link.label, 18, "#7ee2a8", { anchor:"middle", w:"650" });
     }
   });
-}
-
-/* legend — reading this map */
-{
-  const lx = worldW - 1240, ly = 60, lw = 1100, lh = 260;
-  rect(world, lx, ly, lw, lh, "rgba(13,20,32,0.92)", BORDER, 16, { filter:"url(#sh)" });
-  txt(world, lx + 26, ly + 40, "READING THIS MAP", 20, TXT, { w:"800", ls:"0.14em" });
-  const zonesRow = [["sources","Sources"],["ingest","Ingest"],["process","Process"],["serve","Serve"],["consume","Consume"],["security","Security"],["governance","Governance"]];
-  let zx = lx + 26;
-  zonesRow.forEach(z => {
-    el("circle", { cx: zx + 8, cy: ly + 70, r: 8, fill: ZONES[z[0]].acc }, world);
-    txt(world, zx + 24, ly + 76, z[1], 16, MUT);
-    zx += z[1].length * 9 + 60;
-  });
-  const fl = el("path", { d: "M" + (lx+26) + " " + (ly+108) + " h70", stroke:"#9fb6d4", "stroke-width":4, fill:"none", "marker-end":"url(#arr)" }, world);
-  fl.classList.add("flowline");
-  txt(world, lx + 112, ly + 113, "data flow — capture → refine → publish → decide", 15, MUT);
-  txt(world, lx + 26, ly + 148, "ZOOM TO DESCEND", 13, DIM, { w:"700", ls:"0.12em" });
-  const ladder = [["L0","landscape"],["L1","planes & tools"],["L2","inside each tool"],["L3","mechanics"],["L4","the logs themselves"]];
-  let lx2 = lx + 26;
-  ladder.forEach((s, i) => {
-    const bw = 34 + s[1].length * 7.2;
-    rect(world, lx2, ly + 162, bw + 36, 30, blend("#58a6ff", BASE, 0.05 + i*0.035), blend("#58a6ff", BORDER, 0.25), 15);
-    txt(world, lx2 + 14, ly + 182, s[0], 13, "#79c0ff", { w:"800" });
-    txt(world, lx2 + 40, ly + 182, s[1], 13, MUT);
-    lx2 += bw + 48;
-    if (i < 4) txt(world, lx2 - 9, ly + 183, "›", 15, DIM, { anchor:"middle" });
-  });
-  txt(world, lx + 26, ly + 226, "Every card is clickable — the map flies to it. Interactive demos live at L3/L4 inside Kafka, Delta Lake and Spark.", 14, DIM, { maxw: lw - 52 });
 }
 
 /* =============== guided tour =============== */
@@ -909,7 +903,7 @@ let tourIdx = -1, tourTimer = null;
 function showTourStep(){
   const step = TOUR[tourIdx];
   const p = POS[step[0]];
-  if (p) flyTo(p.x - p.w * 0.55, p.y - p.h * 0.25, p.w * 2.2);
+  if (p) flyTo(p.x - p.w * 0.18, p.y - p.h * 0.1, p.w * 1.35);
   document.getElementById("tour-step").textContent = "A RECORD'S JOURNEY - STOP " + (tourIdx + 1) + " OF " + TOUR.length + " : " + step[0].toUpperCase();
   document.getElementById("tour-text").textContent = step[1];
   document.getElementById("tour-next").textContent = tourIdx === TOUR.length - 1 ? "finish" : "next";
@@ -946,7 +940,7 @@ function apply(){
   svg.setAttribute("viewBox", vb.x + " " + vb.y + " " + vb.w + " " + h);
   const k = kNow();
   updateLOD(k);
-  const lvl = k < 0.34 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 7.5 ? "L3 · internals" : "L4 · the logs themselves";
+  const lvl = k < 0.5 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 7.5 ? "L3 · internals" : "L4 · the logs themselves";
   document.getElementById("zoomlvl").textContent = "zoom " + k.toFixed(2) + "× — " + lvl;
 }
 const clampW = w => Math.min(worldW * 1.2, Math.max(vw() / KMAX, w));
@@ -1013,6 +1007,10 @@ document.getElementById("z-out").onclick = () => { const r = wrapEl.getBoundingC
 document.getElementById("z-fit").onclick = fitAll;
 document.addEventListener("keydown", e => { if (e.key === "Escape") fitAll(); });
 window.addEventListener("resize", apply);
+document.getElementById("z-legend").onclick = () => {
+  const L = document.getElementById("legend");
+  L.style.display = L.style.display === "none" ? "block" : "none";
+};
 vb = { x:-60, y:-40, w: worldW * 1.04 }; apply();
 })();
 </script>
