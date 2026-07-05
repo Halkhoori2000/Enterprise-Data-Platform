@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise Banking Data Platform — an explorable model</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e; --dim: #484f58;
+      --blue: #1f6feb; --lightblue: #79c0ff; --green: #3fb950; --orange: #f0883e;
+      --purple: #d2a8ff; --gold: #eac54f; --red: #f85149;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+    header .subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .btn { display: inline-block; padding: 7px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; font-family: inherit; }
+    .btn:hover { opacity: 0.88; text-decoration: none; }
+    .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .disclosure { background: rgba(210,168,255,0.06); border-bottom: 1px solid #3d2d5c; padding: 8px 28px; font-size: 0.78rem; color: var(--purple); text-align: center; }
+    .crumbbar { position: sticky; top: 0; z-index: 40; background: rgba(13,17,23,0.96); backdrop-filter: blur(4px); display: flex; align-items: center; gap: 8px; padding: 12px 28px; border-bottom: 1px solid #21262d; flex-wrap: wrap; }
+    .crumb { font-size: 0.8rem; color: var(--muted); cursor: pointer; padding: 3px 10px; border-radius: 12px; border: 1px solid transparent; }
+    .crumb:hover { color: var(--text); border-color: var(--border); }
+    .crumb.here { color: var(--lightblue); font-weight: 600; cursor: default; }
+    .crumb-sep { color: var(--dim); font-size: 0.8rem; }
+    .esc-hint { margin-left: auto; font-size: 0.72rem; color: var(--dim); }
+    #stage { flex: 1; padding: 26px 28px 40px; max-width: 1280px; margin: 0 auto; width: 100%; }
+    .view { animation: zoomin 0.28s ease; }
+    .view.out { animation: zoomout 0.28s ease; }
+    @keyframes zoomin { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+    @keyframes zoomout { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+    /* L0 */
+    .pillars { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
+    .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 4px 14px; font-size: 0.74rem; color: var(--muted); }
+    .l0-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; align-items: stretch; }
+    .l0-col { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; display: flex; flex-direction: column; gap: 10px; }
+    .l0-col:hover { border-color: var(--blue); transform: translateY(-3px); }
+    .l0-col h3 { font-size: 0.95rem; font-weight: 700; }
+    .l0-col .coltag { font-size: 0.68rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; }
+    .l0-col .mini, .rail .mini { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 0.7rem; color: var(--muted); }
+    .chip.hot { border-color: #1f6feb66; color: var(--lightblue); }
+    .l0-col .more, .rail .more { margin-top: auto; font-size: 0.72rem; color: var(--lightblue); }
+    .l0-arrows { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 10px 0 14px; }
+    .l0-arrows div { text-align: center; color: var(--orange); font-size: 1rem; }
+    .rails { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+    .rail { border-radius: 12px; padding: 14px 18px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; transition: border-color 0.15s, transform 0.15s; }
+    .rail:hover { transform: translateY(-2px); }
+    .rail.sec:hover { border-color: #f8514966; }
+    .rail.gov:hover { border-color: #d2a8ff66; }
+    .rail h4 { font-size: 0.85rem; white-space: nowrap; }
+    .rail.sec h4 { color: #ff9b96; } .rail.gov h4 { color: var(--purple); }
+    .journeys { margin-top: 26px; }
+    .journeys > h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--green); margin-bottom: 10px; }
+    .jgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .jcard { background: var(--surface); border: 1px solid #23863633; border-radius: 10px; padding: 15px 17px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+    .jcard:hover { border-color: var(--green); transform: translateY(-2px); }
+    .jcard h5 { font-size: 0.9rem; margin-bottom: 5px; color: var(--green); }
+    .jcard p { font-size: 0.78rem; color: var(--muted); }
+    .hint { text-align: center; color: var(--dim); font-size: 0.78rem; margin-top: 22px; }
+    /* L1 planes + deep pages */
+    .plane-intro { color: #b8c2cc; font-size: 0.92rem; max-width: 880px; margin-bottom: 22px; }
+    .plane-intro strong { color: var(--text); }
+    .lane { margin-bottom: 26px; }
+    .lane > h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--orange); margin-bottom: 10px; }
+    .nodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+    .node { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; position: relative; transition: border-color 0.15s, transform 0.15s; }
+    .node.deep { cursor: pointer; }
+    .node.deep:hover { border-color: var(--blue); transform: translateY(-2px); }
+    .node h5 { font-size: 0.92rem; font-weight: 600; margin-bottom: 5px; padding-right: 48px; }
+    .node p { font-size: 0.8rem; color: var(--muted); }
+    .depth { position: absolute; top: 12px; right: 12px; background: #0d419d; color: var(--lightblue); border-radius: 10px; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; letter-spacing: 0.06em; }
+    .depth.j { background: #033a16; color: var(--green); }
+    .flow-strip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0 22px; }
+    .flow-strip .fbox { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; color: #b8c2cc; }
+    .flow-strip .fbox b { color: var(--text); }
+    .flow-strip .farr { color: var(--orange); }
+    .fbox.bronze { border-color: #b0762a; } .fbox.silver { border-color: #7d8590; } .fbox.gold { border-color: #d4a72c; }
+    .nextzoom { display: inline-block; margin-top: 8px; background: var(--surface); border: 1px solid var(--blue); color: var(--lightblue); border-radius: 8px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; transition: transform 0.15s; }
+    .nextzoom:hover { transform: translateY(-2px); }
+    .linkout { display: inline-block; margin-top: 8px; background: #033a16; border: 1px solid var(--green); color: var(--green); border-radius: 8px; padding: 10px 18px; font-size: 0.85rem; }
+    /* demos */
+    .demo { background: var(--surface); border: 1px solid var(--blue); border-radius: 10px; padding: 20px 22px; margin: 24px 0; }
+    .demo-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .demo-head h4 { font-size: 0.98rem; }
+    .demo-head .tag { background: #0d419d; color: var(--lightblue); border-radius: 12px; font-size: 0.68rem; font-weight: 700; padding: 2px 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .mono { font-family: 'SF Mono', 'Fira Code', monospace; }
+    /* kafka demo */
+    .klog { display: flex; flex-direction: column; gap: 10px; }
+    .krow { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; }
+    .krow .klabel { font-size: 0.72rem; color: var(--muted); text-align: right; font-family: 'SF Mono', monospace; }
+    .kstrip { display: flex; gap: 4px; min-height: 40px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px; overflow: hidden; align-items: center; }
+    .kmsg { width: 34px; height: 30px; border-radius: 4px; font-size: 0.6rem; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-family: 'SF Mono', monospace; flex: 0 0 auto; animation: kpop 0.3s ease; }
+    @keyframes kpop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .kmsg.k1 { background: #1f6feb; } .kmsg.k2 { background: #8957e5; } .kmsg.k3 { background: #bf8700; }
+    .kmsg.ghost { opacity: 0.35; }
+    .kcursor { font-size: 0.68rem; color: var(--green); font-family: 'SF Mono', monospace; margin-top: 4px; }
+    .kmeta { font-size: 0.75rem; color: var(--muted); margin-top: 10px; font-family: 'SF Mono', monospace; }
+    /* delta demo */
+    .ddemo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .ddemo { grid-template-columns: 1fr; } }
+    .dpane { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; min-height: 180px; }
+    .dpane h6 { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .dfile { display: inline-flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid #7d8590; border-radius: 5px; padding: 3px 9px; font-size: 0.7rem; font-family: 'SF Mono', monospace; margin: 3px; animation: kpop 0.3s ease; }
+    .dfile.gone { opacity: 0.28; text-decoration: line-through; border-style: dashed; }
+    .dlogline { font-size: 0.72rem; font-family: 'SF Mono', monospace; color: #b8c2cc; padding: 2px 0; animation: kpop 0.25s ease; }
+    .dlogline .act-add { color: var(--green); } .dlogline .act-rem { color: var(--red); } .dlogline .act-chk { color: var(--gold); }
+    .dslider { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 0.8rem; color: var(--muted); }
+    .dslider input { flex: 1; }
+    /* spark demo */
+    .sdag { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+    .sstage { flex: 1; min-width: 130px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; opacity: 0.45; transition: opacity 0.3s, border-color 0.3s; }
+    .sstage.on { opacity: 1; border-color: var(--blue); }
+    .sstage.done { opacity: 1; border-color: var(--green); }
+    .sstage h6 { font-size: 0.74rem; margin-bottom: 6px; }
+    .sstage .sub { font-size: 0.65rem; color: var(--dim); margin-bottom: 6px; }
+    .stasks { display: flex; gap: 3px; flex-wrap: wrap; }
+    .stask { width: 12px; height: 12px; border-radius: 3px; background: var(--surface2); }
+    .stask.run { background: var(--orange); } .stask.ok { background: var(--green); }
+    .sarr { align-self: center; color: var(--orange); }
+    .sarr.shuffle { color: var(--red); font-weight: 700; }
+    .snote { font-size: 0.75rem; color: var(--muted); margin-top: 10px; }
+    /* journey pages */
+    .chev { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0 22px; }
+    .chev .c { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.8rem; color: #b8c2cc; position: relative; }
+    .chev .c b { display: block; color: var(--text); font-size: 0.84rem; }
+    .statrow { display: flex; gap: 20px; flex-wrap: wrap; margin: 14px 0; }
+    .stat { text-align: center; }
+    .stat .v { font-size: 1.5rem; font-weight: 700; color: var(--green); font-family: 'SF Mono', monospace; }
+    .stat .l { font-size: 0.72rem; color: var(--muted); }
+    footer { text-align: center; padding: 24px; border-top: 1px solid #21262d; color: var(--dim); font-size: 0.8rem; }
+    @media (max-width: 900px) { .l0-grid, .l0-arrows { grid-template-columns: 1fr; } .l0-arrows { display: none; } .rails { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Enterprise Banking Data Platform</h1>
+    <div class="subtitle">An explorable model — move between the tools, zoom in for how each one works</div>
+  </div>
+  <div class="header-links">
+    <a class="btn" href="https://github.com/Halkhoori2000/Data-Platform-Confluent-Kafka" target="_blank">GitHub</a>
+  </div>
+</header>
+
+<div class="disclosure">🔒 A generalized model — ideas, architecture, and technology only. No proprietary systems, names, or data appear anywhere.</div>
+
+<div class="crumbbar">
+  <span id="crumbs"></span>
+  <span class="esc-hint">click to zoom in · ESC or breadcrumb to zoom out</span>
+</div>
+
+<main id="stage"></main>
+
+<footer>
+  Hamdan Alkhoori · An explorable, generalized model of an enterprise banking data platform<br>
+  Tool internals are public engineering knowledge; delivery stories link to their own case studies.
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  const $ = sel => document.querySelector(sel);
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  let timers = [];
+  function clearTimers(){ timers.forEach(t=>clearInterval(t)); timers = []; }
+
+  /* ════════════════ CONTENT MODEL ════════════════ */
+  const MODEL = {
+    pillars: ["Data Hydration","Data Platform","Data Governance","Data Privacy","Data as a Product","Data Literacy"],
+    columns: [
+      { id:"sources", tag:"where data is born", name:"Sources",
+        chips:["Core Banking","Cards","Payments","Lending","Treasury","Channels","CRM","Risk","Finance & GL","Collections","Partner Feeds","Manual Excel history"] },
+      { id:"ingest", tag:"getting it in", name:"Ingest",
+        chips:["Confluent Kafka · CDC","ADF · batch","Auto Loader · files","Manual uploads"] },
+      { id:"process", tag:"making it usable", name:"Transform & Process",
+        chips:["Databricks","DLT · Photon · Workflows","Bronze → Silver → Gold","ADLS Gen2 + Delta Lake"] },
+      { id:"serve", tag:"making it consumable", name:"Serve",
+        chips:["Databricks SQL","Semantic layer","Delta Sharing","APIs & endpoints"] },
+      { id:"consume", tag:"where value lands", name:"Consume",
+        chips:["Power BI + Copilot","AI/BI Genie","Data science","Apps & reporting"] },
+    ],
+    rails: [
+      { id:"security", cls:"sec", name:"🛡 Security", chips:["Entra ID","Key Vault","RBAC","Encryption & masking","Defender","Private networking"] },
+      { id:"governance", cls:"gov", name:"📖 Data Governance", chips:["Unity Catalog","Lineage","Data quality","Catalog & marketplace","Modeling (LDM→PDM)"] },
+    ],
+    journeys: [
+      { id:"j-hdl", name:"Historic Data Loading", desc:"535 messy Excel sheets from 8 systems → conformed gold tables. A real delivery on this platform — full case study." },
+      { id:"j-sandbox", name:"Self-service sandboxes", desc:"Full platform parity, provisioned by Infrastructure as Code — innovation without risking production." },
+      { id:"j-method", name:"How a delivery runs", desc:"Discovery → design → build → test → go-live: the methodology behind every workstream." },
+      { id:"j-record", name:"A record's journey", desc:"Follow one card transaction from the core database to a dashboard tile — through every tool it touches." },
+    ],
+    planes: {
+      sources: {
+        name: "Sources",
+        intro: "Dozens of systems generate the bank's data — transactional cores, product platforms, channels, and corporate functions. Some speak database, some speak events, and a long tail speaks <strong>Excel</strong>: years of manually exported monthly files. The platform has to meet each source where it is.",
+        lanes: [
+          { title: "Transactional & product systems", nodes: [
+            { name:"Core banking", desc:"Accounts, customers, transactions — the system of record; captured continuously via CDC on its database." },
+            { name:"Cards", desc:"Issuing and acquiring, conventional and Islamic portfolios — batch positions plus event streams." },
+            { name:"Payments", desc:"Transfers, clearing, gateway events — naturally streaming-shaped data." },
+            { name:"Lending & mortgages", desc:"Originations, servicing, collateral — batch extracts and reference data." },
+            { name:"Treasury & finance", desc:"Positions, GL, regulatory ledgers — end-of-period batch by nature." },
+          ]},
+          { title: "People & channels", nodes: [
+            { name:"Digital channels", desc:"Mobile and web activity — high-volume behavioural events." },
+            { name:"CRM & operations", desc:"Customer interactions, cases, campaigns." },
+            { name:"Risk systems", desc:"Ratings, provisions, exposures — the consumers who care most about lineage." },
+          ]},
+          { title: "The long tail", nodes: [
+            { name:"Manual Excel history", desc:"Years of monthly position files, exported by hand, drifting in shape — the problem the Historic Data Loading delivery solved.", go:"deep:j-hdl", badge:"journey" },
+            { name:"Partner & external feeds", desc:"Bureaus, processors, market data — files and APIs on their own schedules." },
+          ]},
+        ],
+      },
+      ingest: {
+        name: "Ingest",
+        intro: "Three lanes, one principle: <strong>capture data the way the source produces it</strong>. Databases stream their changes; systems that batch, batch; files get watched and swept. Everything lands governed, nothing is hand-carried.",
+        lanes: [
+          { title: "Streaming — change data capture", nodes: [
+            { name:"Confluent Kafka", desc:"The streaming backbone: clusters, topics, partitions — real-time change events from core databases.", go:"deep:kafka", badge:"L2" },
+            { name:"Kafka Connect", desc:"CDC and JDBC connectors capture inserts, updates and deletes from source databases into topics.", go:"deep:connect", badge:"L2" },
+            { name:"Schema Registry", desc:"Schemas as contracts between producers and consumers — evolution without breakage.", go:"deep:registry", badge:"L2" },
+          ]},
+          { title: "Batch — orchestrated copy", nodes: [
+            { name:"ADF pipelines", desc:"Control-table-driven Lookup → ForEach → Copy; schedules, triggers, and integration runtimes reach into the estate.", go:"deep:adf", badge:"L2" },
+            { name:"Watermark control tables", desc:"Metadata decides what's new; each run loads only above the watermark — idempotent by design.", go:"deep:watermark", badge:"L2" },
+          ]},
+          { title: "Files & lakehouse-native", nodes: [
+            { name:"Auto Loader", desc:"Watches landing paths, checkpoints what it has seen, processes each new file exactly once.", go:"deep:autoloader", badge:"L2" },
+            { name:"Delta Live Tables — ingestion", desc:"Declarative pipelines with data-quality expectations built in.", go:"deep:dlt", badge:"L2" },
+            { name:"Lakehouse Federation", desc:"Query sources in place when moving the data isn't worth it.", go:"deep:federation", badge:"L2" },
+          ]},
+        ],
+      },
+      process: {
+        name: "Transform & Process",
+        intro: "One engine, one storage layer, one refinement path: <strong>Databricks on ADLS Gen2 + Delta Lake</strong>, organizing everything as Bronze → Silver → Gold. Raw is preserved, conformance is explicit, and business meaning is applied last.",
+        flow: [
+          { cls:"bronze", b:"Bronze", t:"as-produced, full fidelity + lineage metadata" },
+          { cls:"silver", b:"Silver", t:"conformed to the enterprise data model, typed, deduplicated" },
+          { cls:"gold", b:"Gold", t:"business-specific marts, metrics and compliance fields" },
+        ],
+        lanes: [
+          { title: "Compute", nodes: [
+            { name:"Apache Spark + Photon", desc:"Distributed compute with a vectorized engine underneath — the workhorse for batch and streaming alike.", go:"deep:spark", badge:"L2" },
+            { name:"Delta Live Tables", desc:"Pipelines declared, not scripted — with expectations enforcing quality mid-flow.", go:"deep:dlt", badge:"L2" },
+            { name:"Databricks Workflows", desc:"Jobs, dependencies, retries, alerts — the operational wrapper around every pipeline.", go:"deep:workflows", badge:"L2" },
+          ]},
+          { title: "Storage & format", nodes: [
+            { name:"Delta Lake", desc:"ACID tables on the lake: a transaction log makes files behave like a database — time travel included.", go:"deep:delta", badge:"L2" },
+            { name:"ADLS Gen2", desc:"Hierarchical, cheap, durable — the physical home of every layer.", go:"deep:adls", badge:"L2" },
+          ]},
+          { title: "The transformation playbook", nodes: [
+            { name:"ETL framework", desc:"Extract → Clean → Transform → Load as reusable functional components, wrapped in metadata, logging and common services.", go:"deep:etlfw", badge:"L2" },
+            { name:"Standardisation & mapping", desc:"Schema harmonization, dedup keys, SCD logic, business rules — driven by mapping metadata, not hard-coded.", go:"deep:mapping", badge:"L2" },
+          ]},
+        ],
+      },
+      serve: {
+        name: "Serve",
+        intro: "Gold tables are only useful if people can reach them. The serving layer turns governed data into <strong>queryable, shareable, addressable products</strong> — without copies escaping governance.",
+        lanes: [
+          { title: "Query & warehouse", nodes: [
+            { name:"Databricks SQL", desc:"Warehouse-grade SQL over the lakehouse — dashboards and analysts hit Gold directly.", go:"deep:dbsql", badge:"L2" },
+            { name:"Semantic & reporting layer", desc:"Business definitions in one place, so every tool sees the same truth." },
+          ]},
+          { title: "Sharing & interfaces", nodes: [
+            { name:"Delta Sharing", desc:"Open-protocol sharing to internal tenants and partners — no data copies, governance intact.", go:"deep:sharing", badge:"L2" },
+            { name:"Serving endpoints & APIs", desc:"Analytics, reports and applications consume through governed endpoints." },
+          ]},
+        ],
+      },
+      consume: {
+        name: "Consume",
+        intro: "The point of all of it: <strong>decisions</strong>. Dashboards for the business, natural-language answers for everyone else, notebooks for data science, and regulatory outputs that trace all the way back to their sources.",
+        lanes: [
+          { title: "Analytics & BI", nodes: [
+            { name:"Power BI + Copilot", desc:"Enterprise dashboards over the semantic layer — with AI assistance on top.", go:"deep:powerbi", badge:"L2" },
+            { name:"AI/BI Genie", desc:"Ask the lakehouse questions in plain language; governed data answers.", go:"deep:genie", badge:"L2" },
+          ]},
+          { title: "Advanced & operational", nodes: [
+            { name:"Data science & ML", desc:"Notebooks and models working on governed Gold and Silver data." },
+            { name:"Apps & operational reporting", desc:"Systems and portals consuming through APIs and shares." },
+            { name:"Risk & regulatory outputs", desc:"Reports whose every figure has lineage back to a source system." },
+          ]},
+        ],
+      },
+      security: {
+        name: "Security",
+        intro: "Security is a rail, not a feature — it runs under every column. <strong>Identity first, least privilege everywhere, secrets nowhere in code, and private networking by default.</strong>",
+        lanes: [
+          { title: "Identity & access", nodes: [
+            { name:"Entra ID", desc:"One identity plane: SSO, MFA, service principals for every automated actor.", go:"deep:entra", badge:"L2" },
+            { name:"RBAC & access management", desc:"Role-based, least-privilege access down to row and column where needed." },
+          ]},
+          { title: "Protection", nodes: [
+            { name:"Key Vault", desc:"Keys and secrets centralised; pipelines reference, never contain, credentials.", go:"deep:keyvault", badge:"L2" },
+            { name:"Encryption & masking", desc:"Encrypted at rest and in transit; sensitive fields masked for non-privileged eyes." },
+            { name:"Defender & policy enforcement", desc:"Posture monitoring and guardrails across the estate." },
+          ]},
+          { title: "Network", nodes: [
+            { name:"Private networking", desc:"Private endpoints, VNet peering, controlled ingress/egress — data never rides the public internet.", go:"deep:network", badge:"L2" },
+          ]},
+        ],
+      },
+      governance: {
+        name: "Data Governance",
+        intro: "Governance is what makes the platform <strong>trustworthy at scale</strong>: one catalog over everything, lineage end-to-end, quality measured not assumed, and business ownership of meaning.",
+        lanes: [
+          { title: "Catalog & lineage", nodes: [
+            { name:"Unity Catalog", desc:"One metastore governing tables, files and models — grants, lineage and audit in a single place.", go:"deep:unity", badge:"L2" },
+            { name:"End-to-end lineage", desc:"Source → Bronze → Silver → Gold → report: every figure traceable." },
+          ]},
+          { title: "Quality & meaning", nodes: [
+            { name:"Data quality", desc:"Rules, monitoring and KPIs — null checks, reference validation, anomaly detection.", go:"deep:dq", badge:"L2" },
+            { name:"Mapping & dictionary workflow", desc:"Business decides what fields mean and require — engineering enforces it in the pipelines." },
+            { name:"Data modeling (LDM → PDM)", desc:"Logical models agreed with the business, physicalised into Silver and Gold." },
+          ]},
+          { title: "Discovery", nodes: [
+            { name:"Catalog & marketplace", desc:"Data findable and requestable as a product — with owners and contracts." },
+          ]},
+        ],
+      },
+    },
+
+    /* ── deep pages: L2 per tool, L3/L4 for Kafka & Delta, journeys ── */
+    deep: {
+      /* —— INGEST —— */
+      kafka: { name:"Confluent Kafka", parent:"plane:ingest",
+        intro:"The streaming backbone. Databases don't get polled — their <strong>changes are captured as events</strong> and published into Kafka, where anything downstream can consume them in real time. The estate is organized for isolation and reuse.",
+        lanes:[
+          { title:"The estate", nodes:[
+            { name:"One organization, many clusters", desc:"Production, development and test clusters — plus dedicated clusters per major use case, so workloads can't starve each other." },
+            { name:"Cluster linking", desc:"Topics replicate between clusters without custom copy jobs — data produced once, consumable where needed." },
+            { name:"Reuse over rebuild", desc:"New use cases tap existing CDC topics and just consume — capture happens once per source, never per consumer." },
+            { name:"Dedicated connectors where needed", desc:"When a use case needs its own source or sink, it gets its own connector — isolated, monitored, promotable." },
+          ]},
+          { title:"Core concepts", nodes:[
+            { name:"Topics & partitions", desc:"A topic is a named stream; it's split into partitions for parallelism. Ordering is guaranteed within a partition — never across them." },
+            { name:"Producers & keys", desc:"A message's key is hashed to choose its partition — same key, same partition, same order. That's how one account's events stay sequential." },
+            { name:"Consumer groups", desc:"Consumers in a group split the partitions between them; each partition is read by exactly one member. Scale by adding consumers — up to the partition count." },
+            { name:"Delivery semantics", desc:"acks=all + idempotent producers prevent duplicates on retry; consumers commit offsets to resume exactly where they stopped." },
+          ]},
+        ],
+        next:{ label:"Zoom deeper — inside a cluster →", go:"deep:kafka-cluster" } },
+
+      "kafka-cluster": { name:"Inside a cluster", parent:"deep:kafka",
+        intro:"A cluster is a set of <strong>brokers</strong> — servers that each hold a slice of every topic. Nothing here is exotic: it's careful bookkeeping about who owns what, replicated enough times to survive failures.",
+        lanes:[
+          { title:"Brokers & replication", nodes:[
+            { name:"Brokers", desc:"Each broker hosts many partitions. Spread a topic's partitions across brokers and no single machine limits the stream." },
+            { name:"Leaders & followers", desc:"Every partition has one leader (all reads/writes) and follower replicas on other brokers that copy it continuously." },
+            { name:"In-sync replicas (ISR)", desc:"The followers that are fully caught up. A write is 'committed' once the ISR has it — lose the leader, and an ISR member takes over with zero data loss." },
+          ]},
+          { title:"Getting data in and out", nodes:[
+            { name:"Kafka Connect workers", desc:"A connector is configuration, not code: source connectors pull database changes in; sink connectors push topics onward to the lakehouse." },
+            { name:"Schema Registry", desc:"Producers register the shape of their messages; consumers validate against it. Compatibility rules decide what changes are allowed." },
+            { name:"UAT → PROD promotion", desc:"Connector configs, topic standards and schemas move through environments like code — reviewed, versioned, promoted." },
+          ]},
+        ],
+        next:{ label:"Zoom to the bottom — inside a partition →", go:"deep:kafka-partition" } },
+
+      "kafka-partition": { name:"Inside a partition — the commit log", parent:"deep:kafka-cluster",
+        intro:"The bottom of Kafka is almost embarrassingly simple: an <strong>append-only log</strong>. Messages are written to the end, numbered by <strong>offset</strong>, and never modified. Everything else — replication, consumers, exactly-once — is built on that one idea.",
+        lanes:[
+          { title:"The log", nodes:[
+            { name:"Append-only", desc:"New messages only ever go on the end. No updates, no deletes in place — which is why writes are fast and ordering is trivial." },
+            { name:"Offsets", desc:"Each message gets the next number in line. A consumer's entire state is one integer: the offset it has reached." },
+            { name:"Segments & retention", desc:"On disk the log is chunks (segments). Old segments expire by time/size — or are compacted, keeping only the latest message per key." },
+            { name:"Replication mechanics", desc:"Followers literally consume the leader's log like any other reader — fetch from offset, append locally. Same primitive everywhere." },
+          ]},
+        ],
+        demo:"kafka" },
+
+      connect: { name:"Kafka Connect", parent:"plane:ingest",
+        intro:"The bridge between databases and streams — <strong>configuration, not code</strong>. A connector declares what to capture or deliver; workers run it, scale it, and restart it.",
+        lanes:[
+          { title:"How capture works", nodes:[
+            { name:"CDC source connectors", desc:"Read the database's own change log (redo/binlog-style), not the tables — every insert, update and delete becomes an event, with no load on the source queries." },
+            { name:"JDBC source connectors", desc:"For sources without workable log access: incremental queries by key/timestamp — a watermark, applied to streaming." },
+            { name:"Sink connectors", desc:"The reverse direction: topics delivered into the lakehouse or other stores, batched and retried automatically." },
+          ]},
+          { title:"Operating it", nodes:[
+            { name:"Workers & tasks", desc:"Connectors split into tasks distributed over a worker fleet — a task dies, it's rescheduled; a worker dies, its tasks move." },
+            { name:"Secrets externalized", desc:"Connector configs reference a secrets store — credentials never sit in the config itself." },
+            { name:"Promotion flow", desc:"Configs are versioned and promoted UAT → PROD like any artifact." },
+          ]},
+        ]},
+
+      registry: { name:"Schema Registry", parent:"plane:ingest",
+        intro:"Streams only work at scale if producers and consumers agree on message shape <strong>without meeting</strong>. The registry is that agreement, enforced.",
+        lanes:[
+          { title:"Contracts", nodes:[
+            { name:"Schemas as contracts", desc:"Every topic's message format is registered and versioned. Consumers read the schema, not guesswork." },
+            { name:"Compatibility modes", desc:"Backward: new consumers read old data. Forward: old consumers read new data. Full: both. The registry rejects changes that would break the promise." },
+            { name:"Evolution without breakage", desc:"Add an optional field — fine. Remove a required one — rejected at registration, not discovered in production at 2am." },
+          ]},
+        ]},
+
+      adf: { name:"ADF pipelines", parent:"plane:ingest",
+        intro:"The batch workhorse: <strong>orchestrated, parameterised copy</strong>. ADF doesn't transform — it moves data on schedule, driven by metadata, with retries and alerts built in.",
+        lanes:[
+          { title:"Anatomy of a pipeline", nodes:[
+            { name:"Lookup → ForEach → Copy", desc:"Look up what to move (from a control table), loop over the result, copy each item — the pattern that scales from one file to thousands." },
+            { name:"Triggers", desc:"Schedule (run at month-end), tumbling window (every period exactly once), or event (a file arrived) — pipelines start themselves." },
+            { name:"Integration runtimes", desc:"The compute that executes the copy. A self-hosted runtime sits inside the private network and reaches sources the cloud can't touch directly." },
+          ]},
+          { title:"Operating it", nodes:[
+            { name:"Parameterised everything", desc:"One pipeline, many systems: source, path, and period arrive as parameters from the control tables." },
+            { name:"Retries, timeouts, alerts", desc:"Transient failures retry; real failures notify — a copy is never silently half-done." },
+          ]},
+        ]},
+
+      watermark: { name:"Watermark control tables", parent:"plane:ingest",
+        intro:"The incremental brain of batch: <strong>metadata that remembers what's been loaded</strong>. Every run asks one question — what exists above my watermark? — and touches nothing else.",
+        lanes:[
+          { title:"The pattern", nodes:[
+            { name:"High-water mark", desc:"A control table records the latest loaded period (or file) per source. New run: load where period > watermark, then advance it." },
+            { name:"One row per unit of work", desc:"Each file/sheet/period is a row with everything needed to process it — path, target, parameters, an active flag." },
+            { name:"Idempotent by construction", desc:"Each unit writes to its own target with overwrite semantics: re-running a row is safe, replaying a batch is safe." },
+            { name:"Proven at scale", desc:"This exact pattern drove the Historic Data Loading delivery — 535 sheets, replayable batch by batch.", go:"deep:j-hdl", badge:"journey" },
+          ]},
+        ]},
+
+      autoloader: { name:"Auto Loader", parent:"plane:ingest",
+        intro:"File ingestion without bookkeeping pain: point it at a landing path and it <strong>discovers, tracks, and loads new files exactly once</strong> — whether ten arrive or ten million.",
+        lanes:[
+          { title:"How it works", nodes:[
+            { name:"Two discovery modes", desc:"Directory listing (simple, periodic scans) or file notifications (storage events push arrivals) — the second scales to massive folders." },
+            { name:"Checkpointed state", desc:"What's been processed lives in a checkpoint — restart the stream and it resumes, never double-loads." },
+            { name:"Schema inference & evolution", desc:"It learns the schema from the files and can evolve as columns appear." },
+            { name:"Rescued data", desc:"Values that don't fit the expected schema aren't dropped — they land in a rescue column for later inspection. Nothing silently lost." },
+          ]},
+        ]},
+
+      dlt: { name:"Delta Live Tables", parent:"plane:process",
+        intro:"Pipelines <strong>declared, not scripted</strong>: you state what each table should be, and DLT works out order, parallelism, retries and infrastructure. Quality rules live inside the pipeline, not around it.",
+        lanes:[
+          { title:"The model", nodes:[
+            { name:"Streaming tables & materialized views", desc:"Declare a table as continuously fed or as a computed view — DLT keeps both current." },
+            { name:"Expectations", desc:"Data-quality rules as code: warn, drop the row, or fail the pipeline. Quality metrics are recorded per run, per rule." },
+            { name:"Automatic lineage & orchestration", desc:"DLT derives the dependency graph from the declarations — the pipeline diagram is generated, not drawn." },
+          ]},
+        ]},
+
+      federation: { name:"Lakehouse Federation", parent:"plane:ingest",
+        intro:"Not everything should be copied. Federation lets the platform <strong>query external databases in place</strong> — governed like native tables, moved only if it earns it.",
+        lanes:[
+          { title:"How it works", nodes:[
+            { name:"Connections & foreign catalogs", desc:"An external database mounts as a catalog — its tables appear beside native ones, with the same permission model." },
+            { name:"Query pushdown", desc:"Filters and projections execute at the source; only results travel." },
+            { name:"Ingest when it earns it", desc:"Frequently used, heavily transformed data still gets ingested — federation covers the exploratory and occasional." },
+          ]},
+        ]},
+
+      /* —— PROCESS —— */
+      spark: { name:"Apache Spark + Photon", parent:"plane:process",
+        intro:"The engine under everything. Spark's trick: <strong>describe the whole computation first, execute it lazily</strong> — so the planner can optimize across steps, split work into parallel tasks, and move as little data as possible.",
+        lanes:[
+          { title:"The moving parts", nodes:[
+            { name:"Driver & executors", desc:"The driver plans; executors do. A cluster is one driver directing many executor processes across machines." },
+            { name:"Lazy evaluation → DAG", desc:"Transformations build a graph; nothing runs until an action forces it. Then the whole graph optimizes as one." },
+            { name:"Stages & shuffles", desc:"The DAG splits into stages at shuffle boundaries — where data must regroup across the cluster (joins, aggregations). Shuffles are the expensive part; good pipelines minimize them." },
+            { name:"Tasks & partitions", desc:"Each stage runs as parallel tasks — one per data partition. More partitions, more parallelism, up to the cluster's cores." },
+            { name:"Photon", desc:"A vectorized C++ engine that executes Spark plans on columnar batches — same code, several times faster on SQL-shaped work." },
+          ]},
+        ],
+        demo:"spark" },
+
+      delta: { name:"Delta Lake", parent:"plane:process",
+        intro:"Plain files can't be trusted with banking data — a failed job leaves half-written garbage. Delta wraps files in a <strong>transaction log</strong>, and suddenly the lake behaves like a database: atomic commits, consistent reads, history.",
+        lanes:[
+          { title:"What the log buys", nodes:[
+            { name:"ACID on object storage", desc:"Readers see complete commits or nothing. Writers either fully succeed or leave no trace." },
+            { name:"Time travel", desc:"Every version is queryable: the table as of yesterday, or as of version 41 — audit and rollback for free." },
+            { name:"Schema enforcement & evolution", desc:"Writes that don't match the schema are rejected — unless evolution is explicitly allowed. Drift becomes a decision, not an accident." },
+            { name:"Streaming + batch, one table", desc:"A stream appends while a batch job reads consistently — the log serializes them safely." },
+            { name:"OPTIMIZE & clustering", desc:"Small files compact into big ones; clustering orders data so queries skip most of it." },
+          ]},
+        ],
+        next:{ label:"Zoom deeper — inside the transaction log →", go:"deep:delta-log" } },
+
+      "delta-log": { name:"Inside the transaction log", parent:"deep:delta",
+        intro:"A Delta table is two things: <strong>parquet data files</strong>, and a folder of <strong>numbered JSON commits</strong> describing which files are part of the table at each version. That folder — the log — is the entire magic.",
+        lanes:[
+          { title:"Mechanics", nodes:[
+            { name:"Commits as actions", desc:"Each commit lists actions: add this file, remove that one. The table's current state = replay all commits." },
+            { name:"Checkpoints", desc:"Every N commits, the accumulated state snapshots to parquet — readers start from the checkpoint instead of replaying everything." },
+            { name:"Optimistic concurrency", desc:"Writers don't lock: each prepares its commit, then attempts to claim the next version number. A conflict is detected, the loser retries on fresh state." },
+            { name:"Time travel = version pinning", desc:"Reading version 41 just means replaying the log up to commit 41 — old data files are still there until vacuumed." },
+          ]},
+        ],
+        demo:"delta" },
+
+      workflows: { name:"Databricks Workflows", parent:"plane:process",
+        intro:"Pipelines don't run themselves — Workflows is the <strong>operational wrapper</strong>: what runs, in what order, on what schedule, and who hears about failures.",
+        lanes:[
+          { title:"The essentials", nodes:[
+            { name:"Jobs & task graphs", desc:"A job is a DAG of tasks — notebooks, pipelines, SQL — with dependencies, so step B waits for step A." },
+            { name:"Schedules & triggers", desc:"Cron schedules, file-arrival triggers, or continuous — plus manual runs with parameters for reprocessing." },
+            { name:"Retries, timeouts, alerts", desc:"Transient errors retry with backoff; overruns time out; failures notify people who can act." },
+            { name:"Job clusters & policies", desc:"Each run gets right-sized, policy-compliant compute that exists only for the run — cost follows work." },
+          ]},
+        ]},
+
+      adls: { name:"ADLS Gen2", parent:"plane:process",
+        intro:"The physical ground everything stands on: <strong>object storage with a real filesystem on top</strong> — cheap enough to keep everything, organized enough to secure it precisely.",
+        lanes:[
+          { title:"Why it fits", nodes:[
+            { name:"Hierarchical namespace", desc:"Real directories with atomic renames — which analytics engines and ACLs actually need." },
+            { name:"Zones as paths", desc:"Landing, Bronze, Silver, Gold live as governed path hierarchies — per system, per period." },
+            { name:"Tiers & redundancy", desc:"Hot for active layers, cool for history; replication handles hardware failure invisibly." },
+            { name:"Access two ways", desc:"Coarse RBAC on containers plus fine-grained ACLs on paths — and the platform's catalog governs on top." },
+          ]},
+        ]},
+
+      etlfw: { name:"ETL framework", parent:"plane:process",
+        intro:"Transformation as a <strong>reusable framework, not per-source scripts</strong>: the same functional components run for every system, configured by metadata.",
+        lanes:[
+          { title:"The four component groups", nodes:[
+            { name:"Extract", desc:"Source adapters, scheduling, CDC/batch triggers, type standardisation on the way in." },
+            { name:"Clean", desc:"Parse and correct, standardise and match, remove duplicates, consolidate, quality-screen." },
+            { name:"Transform", desc:"Source-specific then common transformations; derived data and aggregation." },
+            { name:"Load", desc:"Loading strategies, key handling, slowly-changing dimensions, fact-table grains." },
+          ]},
+          { title:"The services around them", nodes:[
+            { name:"Metadata services", desc:"Technical and business metadata in one repository — the framework reads its instructions, never hard-codes them." },
+            { name:"Common services", desc:"Logging & audit, exception handling, archiving, parameterisation, version control — written once, used by every pipeline." },
+            { name:"Rejected-data management", desc:"Records that fail rules land in reject stores with reasons — visible, reprocessable, never silently dropped." },
+          ]},
+        ]},
+
+      mapping: { name:"Standardisation & mapping", parent:"plane:process",
+        intro:"Where engineering meets meaning: <strong>mappings are metadata</strong>, agreed with the business, applied by the pipelines — from raw source fields to the enterprise model to business marts.",
+        lanes:[
+          { title:"The mapping chain", nodes:[
+            { name:"Source → Bronze", desc:"Field-level mapping gaps identified and documented; ingestion metadata (source, period, operation) captured with every row." },
+            { name:"Bronze → Silver", desc:"Raw fields map to the enterprise data model: type conversions, dedup keys, late-arrival handling, SCD logic." },
+            { name:"Silver → Gold", desc:"Entities map to facts and dimensions; KPIs and ratios defined once; compliance fields (IFRS 9, Basel-style) computed under governance." },
+          ]},
+          { title:"Kept honest by", nodes:[
+            { name:"Metadata-driven configs", desc:"Mappings live in configuration (not code) — reviewable, versionable, sign-offable." },
+            { name:"End-to-end lineage", desc:"Every Gold figure traces back through Silver and Bronze to its source field." },
+            { name:"Quality rules per mapping", desc:"Null checks, reference validation and thresholds attached to the mapping itself." },
+          ]},
+        ]},
+
+      /* —— SERVE / CONSUME —— */
+      dbsql: { name:"Databricks SQL", parent:"plane:serve",
+        intro:"The lakehouse's front door for anyone who speaks SQL: <strong>warehouse performance directly on Gold tables</strong> — no copies into a separate warehouse product.",
+        lanes:[
+          { title:"How it serves", nodes:[
+            { name:"SQL warehouses", desc:"Elastic compute pools for queries — spin up on demand, autoscale with concurrency, suspend when idle." },
+            { name:"Photon + caching", desc:"Vectorized execution plus result and disk caches make dashboard queries interactive." },
+            { name:"Governed by the catalog", desc:"The same permissions that govern pipelines govern queries — an analyst sees exactly what they're granted." },
+            { name:"Dashboards & alerts", desc:"Native dashboards and threshold alerts for operational monitoring live right on top." },
+          ]},
+        ]},
+
+      sharing: { name:"Delta Sharing", parent:"plane:serve",
+        intro:"Sharing data used to mean copying it — and losing control of it. Delta Sharing is an <strong>open protocol</strong>: recipients read governed tables directly, and the provider can see and revoke every grant.",
+        lanes:[
+          { title:"The model", nodes:[
+            { name:"Providers, shares, recipients", desc:"A share is a named bundle of tables; recipients get tokens to read it — from any tool that speaks the protocol." },
+            { name:"No copies", desc:"Recipients query the live table. No exports drifting out of date in inboxes." },
+            { name:"Cross-boundary", desc:"Works between workspaces, organizations, even clouds — one mechanism for internal tenants and external partners." },
+          ]},
+        ]},
+
+      powerbi: { name:"Power BI + Copilot", parent:"plane:consume",
+        intro:"Where most of the business actually meets the platform: <strong>semantic models over Gold</strong>, dashboards on top, AI assistance for building and reading them.",
+        lanes:[
+          { title:"How it consumes", nodes:[
+            { name:"Semantic models", desc:"Measures and relationships defined once — every report computes 'NPL ratio' the same way." },
+            { name:"Import vs DirectQuery", desc:"Cache extracts for speed, or query the lakehouse live for freshness — chosen per workload." },
+            { name:"Row-level security", desc:"The same viewer sees only their branch, their portfolio — security follows the data into the visual layer." },
+            { name:"Copilot", desc:"Describe the visual you want, or ask what a chart is saying — assistance on both ends." },
+          ]},
+        ]},
+
+      genie: { name:"AI/BI Genie", parent:"plane:consume",
+        intro:"For everyone who won't open a BI tool: <strong>ask questions in plain language</strong>, get answers computed on governed data — not a chatbot's guess.",
+        lanes:[
+          { title:"How it answers", nodes:[
+            { name:"Curated spaces", desc:"A Genie space is scoped to specific governed tables with business context attached — it answers from those, nothing else." },
+            { name:"NL → SQL, visibly", desc:"The question becomes a SQL query you can inspect — trust through transparency." },
+            { name:"Governance intact", desc:"Permissions apply to the asker: no question returns data its asker couldn't query directly." },
+          ]},
+        ]},
+
+      /* —— SECURITY —— */
+      entra: { name:"Entra ID", parent:"plane:security",
+        intro:"One identity plane for humans and machines. <strong>Nobody — and no pipeline — is anonymous</strong>: every action traces to an identity with exactly the access it needs.",
+        lanes:[
+          { title:"The essentials", nodes:[
+            { name:"SSO + MFA", desc:"One directory, one sign-on, strong auth — across every tool in the platform." },
+            { name:"Service principals & managed identities", desc:"Automated actors get first-class identities — no shared accounts, no passwords in scripts." },
+            { name:"Conditional access", desc:"Context-aware rules: where you are, what device, what risk — before access is granted." },
+            { name:"Groups drive permissions", desc:"Access is granted to roles and groups, not individuals — joiners, movers and leavers become membership changes." },
+          ]},
+        ]},
+
+      keyvault: { name:"Key Vault", parent:"plane:security",
+        intro:"The rule is absolute: <strong>credentials never live in code, configs, or notebooks</strong>. They live in the vault; everything else holds references.",
+        lanes:[
+          { title:"How it's used", nodes:[
+            { name:"Secrets, keys, certificates", desc:"Connection strings, API keys, encryption keys — stored, versioned, access-audited." },
+            { name:"Secret scopes", desc:"Pipelines and notebooks resolve secrets at runtime by name — the value never appears in source." },
+            { name:"Rotation without redeploys", desc:"Rotate the secret in the vault; every consumer picks it up — no code changes, no downtime." },
+          ]},
+        ]},
+
+      network: { name:"Private networking", parent:"plane:security",
+        intro:"Defense in depth starts with the wire: <strong>platform traffic never rides the public internet</strong>. If the path isn't explicitly provisioned, it doesn't exist.",
+        lanes:[
+          { title:"The building blocks", nodes:[
+            { name:"Private endpoints", desc:"Storage, workspaces and services expose private IPs inside the network — public endpoints stay dark." },
+            { name:"VNet peering & ExpressRoute", desc:"Cloud networks interconnect privately; on-premise sources reach the cloud over dedicated circuits." },
+            { name:"Controlled ingress/egress", desc:"What can be reached, and what can reach out, is allow-listed — exfiltration paths are closed by default." },
+            { name:"Provisioned as code", desc:"Subnets, endpoints, peerings and rules are Terraform modules — consistent, reviewable, repeatable.", go:"deep:j-sandbox", badge:"journey" },
+          ]},
+        ]},
+
+      /* —— GOVERNANCE —— */
+      unity: { name:"Unity Catalog", parent:"plane:governance",
+        intro:"One catalog over everything the platform holds: <strong>tables, files, models — governed in one place</strong>, with lineage recorded as queries run.",
+        lanes:[
+          { title:"The model", nodes:[
+            { name:"Three-level namespace", desc:"catalog.schema.object — environments and domains separate cleanly; access follows the hierarchy." },
+            { name:"Grants", desc:"ANSI-style permissions on any object, down to row filters and column masks — one language for all access." },
+            { name:"Automatic lineage", desc:"Table- and column-level lineage captured from real query execution — not documentation that drifts." },
+            { name:"Volumes & audit", desc:"Even raw files are governed objects; every access lands in audit logs." },
+          ]},
+        ]},
+
+      dq: { name:"Data quality", parent:"plane:governance",
+        intro:"Trust is measured, not assumed: <strong>rules attached to data, metrics tracked over time, failures visible</strong> — quality as an operational discipline.",
+        lanes:[
+          { title:"The toolkit", nodes:[
+            { name:"Rule types", desc:"Null and completeness checks, format/regex, reference validation against master data, uniqueness, reconciliation counts, anomaly detection." },
+            { name:"Where rules run", desc:"In-pipeline (expectations that warn, drop or fail) and standing monitors on landed tables." },
+            { name:"Quarantine, not guesswork", desc:"Records or loads that fail critical rules hold for review — a value is never silently chosen." },
+            { name:"KPIs & ownership", desc:"Quality metrics per domain, visible to the data's business owners — governance with a scoreboard." },
+          ]},
+        ]},
+
+      /* —— JOURNEYS —— */
+      "j-hdl": { name:"Historic Data Loading", parent:"l0", journey:true,
+        intro:"A real delivery on this platform: <strong>years of manually exported Excel history — 535 sheets across 8 source systems, 41+ GB — standardised into governed gold tables</strong>, loaded by a metadata-driven pipeline in a ~2-hour automated run.",
+        stats:[ {v:"535", l:"data sheets"}, {v:"8", l:"source systems"}, {v:"41+ GB", l:"of history"}, {v:"~2 hrs", l:"automated run"} ],
+        lanes:[
+          { title:"How it used this platform", nodes:[
+            { name:"ADF", desc:"Orchestrated copy of system/year folders from the file server into the lake — control-table-driven." },
+            { name:"Databricks notebooks", desc:"Automated metadata extraction, header detection in messy sheets, loading, and dictionary-driven conformance." },
+            { name:"Watermark control tables", desc:"One row per sheet; incremental batches; idempotent re-runs — the pattern from the Ingest plane, at full scale." },
+          ]},
+        ],
+        linkout:{ label:"Explore the full interactive case study →", href:"https://halkhoori2000.github.io/Historic-Data-Loading/" } },
+
+      "j-sandbox": { name:"Self-service sandboxes", parent:"l0", journey:true,
+        intro:"Innovation needs a place to be unsafe safely. This project delivers <strong>isolated environments with full platform parity — provisioned end-to-end by Infrastructure as Code</strong> — so partners and teams prototype in days, not quarters, without touching production.",
+        lanes:[
+          { title:"The experience", nodes:[
+            { name:"Request → approve → provision", desc:"A portal request, a governance approval, then automation takes over — no tickets, no hand-built environments." },
+            { name:"Terraform + CI/CD", desc:"Every component — ingestion, storage, compute, catalog, networking — is a Terraform module deployed by pipeline. Identical every time." },
+            { name:"Template tiers", desc:"Lightweight for exploration, standard for full pipelines, advanced for AI/ML workloads — right-sized by default." },
+          ]},
+          { title:"Full parity, real isolation", nodes:[
+            { name:"The whole stack, miniaturised", desc:"Streaming ingestion, lake storage with the medallion layout, processing workspace, catalog, SQL serving — the same architecture as the platform itself." },
+            { name:"Isolation by construction", desc:"Dedicated clusters, no shared storage, PROD-flavoured (masked data, strict controls) vs NON-PROD flavoured (relaxed for experimentation)." },
+            { name:"Ops built in", desc:"Quotas, budget alerts, auto-suspension of idle resources, audit logging — cost and safety are defaults, not afterthoughts." },
+          ]},
+        ]},
+
+      "j-method": { name:"How a delivery runs", parent:"l0", journey:true,
+        intro:"Every workstream on the platform follows the same shape — <strong>meaning is agreed before pipelines are built, and nothing goes live without a parallel run</strong>.",
+        chev:["Business discovery|requirements, source identification, business rules","Architecture & design|sourcing/ELT design, enterprise & reporting data models","Data & build|mappings, Bronze/Silver/Gold pipelines, quality rules","Testing|SIT → pre-UAT → UAT → pre-production","Go live|parallel run, then cutover"],
+        lanes:[
+          { title:"Why it works", nodes:[
+            { name:"Requirements are traceable", desc:"Every reporting requirement maps to sources (an RTM) — scope is explicit before build starts." },
+            { name:"Models before pipelines", desc:"Logical and physical data models are agreed artifacts — Silver and Gold implement decisions, not improvisations." },
+            { name:"Parallel run before cutover", desc:"The new path runs beside the old until the numbers agree — go-live is a comparison, not a leap." },
+          ]},
+        ]},
+
+      "j-record": { name:"A record's journey", parent:"l0", journey:true,
+        intro:"Follow one card payment from the moment it happens to the moment it moves a dashboard — <strong>every hop is a tool in this model</strong>.",
+        chev:["A card is tapped|the core system writes a database row","CDC captures it|the change appears in the database's log; a source connector reads it","Into a topic|keyed by account → always the same partition, always in order","Sink to Bronze|a sink connector lands it in the lake, as-produced, with lineage","Conform to Silver|typed, deduplicated, mapped to the enterprise model","Aggregate to Gold|joins the day's spending metrics and risk features","On the dashboard|Databricks SQL serves it; the tile updates"],
+        lanes:[
+          { title:"What to notice", nodes:[
+            { name:"Nobody touched it", desc:"Seven hops, zero manual steps — the platform's whole promise in one record." },
+            { name:"Ordering held", desc:"The account's events stayed sequential because its key pinned them to one partition." },
+            { name:"Lineage survives", desc:"The dashboard figure traces back through Gold, Silver, Bronze, the topic, to the source row." },
+            { name:"Zoom the hops", desc:"Each step of this journey is explorable: Kafka, Delta, the medallion, the SQL warehouse — all in this model.", go:"deep:kafka", badge:"L2" },
+          ]},
+        ]},
+    },
+  };
+
+  /* ════════════════ RENDERING ════════════════ */
+  function crumbTrail(target){
+    const trail = [{label:"Platform", go:"l0"}];
+    if (target === "l0") return trail;
+    const [kind, id] = target.split(":");
+    if (kind === "plane") { trail.push({label:MODEL.planes[id].name, go:target}); return trail; }
+    // deep page: walk parents
+    const chain = [];
+    let cur = target;
+    while (cur && cur !== "l0") {
+      const [k, i] = cur.split(":");
+      if (k === "plane") { chain.unshift({label:MODEL.planes[i].name, go:cur}); cur = "l0"; }
+      else { const d = MODEL.deep[i]; chain.unshift({label:d.name, go:cur}); cur = d.parent; }
+    }
+    return trail.concat(chain);
+  }
+  function renderCrumbs(target){
+    const list = crumbTrail(target);
+    $("#crumbs").innerHTML = list.map((c,i) =>
+      i === list.length-1
+        ? `<span class="crumb here">${esc(c.label)}</span>`
+        : `<span class="crumb" data-go="${c.go}">${esc(c.label)}</span><span class="crumb-sep">›</span>`
+    ).join("");
+    document.querySelectorAll("#crumbs .crumb[data-go]").forEach(el => el.onclick = () => go(el.dataset.go));
+  }
+
+  function nodeCard(n){
+    const deep = n.go ? " deep" : "";
+    const badge = n.go ? `<span class="depth${n.badge==="journey"?" j":""}">${esc(n.badge||"L2")}</span>` : "";
+    return `<div class="node${deep}"${n.go?` data-go="${n.go}"`:""}>${badge}<h5>${esc(n.name)}</h5><p>${n.desc}</p></div>`;
+  }
+  function lanesHtml(lanes){
+    return lanes.map(l => `
+      <div class="lane"><h4>${esc(l.title)}</h4>
+        <div class="nodes">${l.nodes.map(nodeCard).join("")}</div>
+      </div>`).join("");
+  }
+  function wire(){ document.querySelectorAll("[data-go]").forEach(el => el.onclick = e => { e.stopPropagation(); go(el.dataset.go); }); }
+
+  function renderL0(dir){
+    renderCrumbs("l0");
+    const cols = MODEL.columns.map(c => `
+      <div class="l0-col" data-go="plane:${c.id}">
+        <div class="coltag">${esc(c.tag)}</div>
+        <h3>${esc(c.name)}</h3>
+        <div class="mini">${c.chips.map(ch=>`<span class="chip${/Kafka|Databricks|Delta|Power BI/.test(ch)?" hot":""}">${esc(ch)}</span>`).join("")}</div>
+        <div class="more">zoom in →</div>
+      </div>`).join("");
+    const rails = MODEL.rails.map(r => `
+      <div class="rail ${r.cls}" data-go="plane:${r.id}">
+        <h4>${esc(r.name)}</h4>
+        <div class="mini">${r.chips.map(ch=>`<span class="chip">${esc(ch)}</span>`).join("")}</div>
+        <div class="more" style="margin-left:auto">zoom in →</div>
+      </div>`).join("");
+    const journeys = MODEL.journeys.map(j => `
+      <div class="jcard" data-go="deep:${j.id}"><h5>${esc(j.name)}</h5><p>${esc(j.desc)}</p></div>`).join("");
+    $("#stage").innerHTML = `
+      <div class="view${dir==="out"?" out":""}">
+        <div class="pillars">${MODEL.pillars.map(p=>`<span class="pillar">${esc(p)}</span>`).join("")}</div>
+        <div class="l0-grid">${cols}</div>
+        <div class="l0-arrows"><div></div><div>→</div><div>→</div><div>→</div><div>→</div></div>
+        <div class="rails">${rails}</div>
+        <div class="journeys"><h4>Journeys — see the platform at work</h4><div class="jgrid">${journeys}</div></div>
+        <div class="hint">Click any area to zoom in. Kafka and Delta Lake go all the way down — to the commit log and the transaction log.</div>
+      </div>`;
+    wire();
+  }
+
+  function renderPlane(id, dir){
+    const p = MODEL.planes[id];
+    renderCrumbs("plane:"+id);
+    const flow = p.flow ? `<div class="flow-strip">${p.flow.map((f,i)=>
+      `${i? '<span class="farr">→</span>':''}<span class="fbox ${f.cls}"><b>${esc(f.b)}</b> — ${esc(f.t)}</span>`).join("")}</div>` : "";
+    $("#stage").innerHTML = `
+      <div class="view${dir==="out"?" out":""}">
+        <p class="plane-intro">${p.intro}</p>
+        ${flow}
+        ${lanesHtml(p.lanes)}
+        <div class="hint">Cards with an L2 badge zoom into how that tool works.</div>
+      </div>`;
+    wire();
+  }
+
+  function renderDeep(id, dir){
+    const d = MODEL.deep[id];
+    renderCrumbs("deep:"+id);
+    const stats = d.stats ? `<div class="statrow">${d.stats.map(s=>`<div class="stat"><div class="v">${esc(s.v)}</div><div class="l">${esc(s.l)}</div></div>`).join("")}</div>` : "";
+    const chev = d.chev ? `<div class="chev">${d.chev.map(c=>{ const [b,t]=c.split("|"); return `<span class="c"><b>${esc(b)}</b>${esc(t)}</span>`; }).join('<span class="sarr" style="align-self:center">→</span>')}</div>` : "";
+    const next = d.next ? `<span class="nextzoom" data-go="${d.next.go}">${esc(d.next.label)}</span>` : "";
+    const linkout = d.linkout ? `<a class="linkout" href="${d.linkout.href}" target="_blank">${esc(d.linkout.label)}</a>` : "";
+    const demo = d.demo ? demoShell(d.demo) : "";
+    $("#stage").innerHTML = `
+      <div class="view${dir==="out"?" out":""}">
+        <p class="plane-intro">${d.intro}</p>
+        ${stats}${chev}
+        ${lanesHtml(d.lanes || [])}
+        ${demo}
+        ${next} ${linkout}
+      </div>`;
+    wire();
+    if (d.demo === "kafka") demoKafka();
+    if (d.demo === "delta") demoDelta();
+    if (d.demo === "spark") demoSpark();
+  }
+
+  /* ════════════════ DEMOS ════════════════ */
+  function demoShell(kind){
+    const titles = { kafka:"Watch the log work", delta:"Watch the log work", spark:"Watch a job execute" };
+    const bodies = {
+      kafka: `
+        <div class="klog">
+          <div class="krow"><div class="klabel">producer</div><div class="kmeta" id="k-prod">key → partition: <span class="mono" id="k-keys">—</span></div></div>
+          <div class="krow"><div class="klabel">leader</div><div><div class="kstrip" id="k-leader"></div><div class="kcursor" id="k-off">next offset: 0</div></div></div>
+          <div class="krow"><div class="klabel">follower 1</div><div class="kstrip" id="k-f1"></div></div>
+          <div class="krow"><div class="klabel">follower 2</div><div class="kstrip" id="k-f2"></div></div>
+          <div class="krow"><div class="klabel">consumer</div><div class="kmeta" id="k-cons">committed offset: — · lag: —</div></div>
+        </div>`,
+      delta: `
+        <div class="ddemo">
+          <div class="dpane"><h6>data files (parquet)</h6><div id="d-files"></div></div>
+          <div class="dpane"><h6>_delta_log/</h6><div id="d-log"></div></div>
+        </div>
+        <div class="dslider"><span>time travel:</span><input type="range" id="d-ver" min="0" max="0" value="0"><span class="mono" id="d-verlabel">version 0</span></div>`,
+      spark: `
+        <div class="sdag">
+          <div class="sstage" id="s-1"><h6>Stage 1 · read + filter</h6><div class="sub">narrow — no data movement</div><div class="stasks" id="s-1t"></div></div>
+          <div class="sarr">→</div>
+          <div class="sstage" id="s-2"><h6>Stage 2 · join</h6><div class="sub">after SHUFFLE — data regroups</div><div class="stasks" id="s-2t"></div></div>
+          <div class="sarr shuffle">⇄</div>
+          <div class="sstage" id="s-3"><h6>Stage 3 · aggregate + write</h6><div class="sub">after second shuffle</div><div class="stasks" id="s-3t"></div></div>
+        </div>
+        <div class="snote" id="s-note">Press ▶ — the driver splits the plan into stages at shuffle boundaries; each stage runs as parallel tasks.</div>`,
+    };
+    return `
+      <div class="demo">
+        <div class="demo-head">
+          <h4>${titles[kind]}</h4><span class="tag">live demo</span>
+          <button class="btn btn-primary" id="demo-btn">▶ Run</button>
+        </div>
+        ${bodies[kind]}
+      </div>`;
+  }
+
+  function demoKafka(){
+    const KEYS = [ {k:"acct-11", c:"k1"}, {k:"acct-42", c:"k2"}, {k:"acct-77", c:"k3"} ];
+    let off = 0, committed = -1, running = false;
+    const cap = 14;
+    $("#demo-btn").onclick = () => {
+      if (running) { clearTimers(); running = false; $("#demo-btn").textContent = "▶ Run"; return; }
+      running = true; $("#demo-btn").textContent = "⏸ Pause";
+      const t1 = setInterval(() => {
+        const key = KEYS[Math.floor(Math.random()*KEYS.length)];
+        const el = document.createElement("div");
+        el.className = "kmsg " + key.c;
+        el.innerHTML = `<span>${off}</span><span>${key.k.slice(5)}</span>`;
+        const strip = $("#k-leader");
+        if (!strip) { clearTimers(); return; }
+        strip.appendChild(el);
+        if (strip.children.length > cap) strip.removeChild(strip.firstChild);
+        $("#k-keys").textContent = `${key.k} → hash → partition 0`;
+        $("#k-off").textContent = `next offset: ${off+1}`;
+        const myOff = off;
+        timers.push(setTimeout(() => { replicate("#k-f1", el); }, 350));
+        timers.push(setTimeout(() => { replicate("#k-f2", el); }, 650));
+        timers.push(setTimeout(() => {
+          committed = Math.max(committed, myOff);
+          const consEl = $("#k-cons");
+          if (consEl) consEl.textContent = `committed offset: ${committed} · lag: ${off-1-committed < 0 ? 0 : off-1-committed}`;
+        }, 1100));
+        off++;
+      }, 800);
+      timers.push(t1);
+    };
+    function replicate(sel, srcEl){
+      const strip = $(sel);
+      if (!strip) return;
+      const c = srcEl.cloneNode(true);
+      strip.appendChild(c);
+      if (strip.children.length > cap) strip.removeChild(strip.firstChild);
+    }
+  }
+
+  function demoDelta(){
+    let running = false, version = 0;
+    const state = []; // versions: [{files:[names visible]}]
+    let allFiles = [];
+    const actions = [
+      { act:"add", n:2, note:"batch insert" },
+      { act:"add", n:1, note:"stream append" },
+      { act:"add", n:2, note:"batch insert" },
+      { act:"opt", note:"OPTIMIZE — compact small files" },
+      { act:"add", n:1, note:"late data" },
+      { act:"chk", note:"checkpoint" },
+      { act:"add", n:2, note:"stream append" },
+    ];
+    let step = 0, fileNo = 0;
+    $("#demo-btn").onclick = () => {
+      if (running) { clearTimers(); running = false; $("#demo-btn").textContent = "▶ Run"; return; }
+      if (step >= actions.length) { reset(); }
+      running = true; $("#demo-btn").textContent = "⏸ Pause";
+      const t = setInterval(() => {
+        if (step >= actions.length) { clearTimers(); running = false; const b=$("#demo-btn"); if(b) b.textContent = "▶ Replay"; return; }
+        const a = actions[step++];
+        const prev = state.length ? state[state.length-1].files.slice() : [];
+        if (a.act === "add") {
+          const added = [];
+          for (let i=0;i<a.n;i++){ const nm = `part-${String(fileNo++).padStart(3,"0")}.parquet`; added.push(nm); allFiles.push(nm); }
+          state.push({ files: prev.concat(added) });
+          log(`0000${state.length-1}.json`, `<span class="act-add">add</span> ${added.join(", ")} <span style="color:#484f58">· ${a.note}</span>`);
+        } else if (a.act === "opt") {
+          const compacted = `part-${String(fileNo++).padStart(3,"0")}.parquet`;
+          allFiles.push(compacted);
+          state.push({ files: [compacted].concat([]) });
+          log(`0000${state.length-1}.json`, `<span class="act-rem">remove</span> ${prev.length} files · <span class="act-add">add</span> ${compacted} <span style="color:#484f58">· ${a.note}</span>`);
+        } else if (a.act === "chk") {
+          state.push({ files: prev });
+          log(`checkpoint.parquet`, `<span class="act-chk">checkpoint</span> — state snapshot; readers start here <span style="color:#484f58">· commit ${state.length-1}</span>`);
+        }
+        version = state.length-1;
+        const slider = $("#d-ver");
+        if (slider) { slider.max = version; slider.value = version; }
+        renderFiles(version);
+        const vl = $("#d-verlabel"); if (vl) vl.textContent = `version ${version}`;
+      }, 950);
+      timers.push(t);
+    };
+    const sliderEl = $("#d-ver");
+    if (sliderEl) sliderEl.oninput = e => {
+      const v = +e.target.value;
+      renderFiles(v);
+      $("#d-verlabel").textContent = `version ${v}` + (v < state.length-1 ? " (time travel)" : "");
+    };
+    function renderFiles(v){
+      const box = $("#d-files");
+      if (!box || !state.length) return;
+      const visible = new Set(state[v].files);
+      box.innerHTML = allFiles.map(f => `<span class="dfile${visible.has(f)?"":" gone"}">📄 ${f}</span>`).join("");
+    }
+    function log(name, html){
+      const box = $("#d-log");
+      if (!box) return;
+      box.innerHTML += `<div class="dlogline"><span style="color:#79c0ff">${name}</span> — ${html}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+    function reset(){ step = 0; fileNo = 0; allFiles = []; state.length = 0; const f=$("#d-files"), l=$("#d-log"); if(f)f.innerHTML=""; if(l)l.innerHTML=""; }
+  }
+
+  function demoSpark(){
+    const stages = [
+      { box:"#s-1", tasks:"#s-1t", n:8, note:"Stage 1: each task reads and filters its own partition — fully parallel, no coordination." },
+      { box:"#s-2", tasks:"#s-2t", n:6, note:"SHUFFLE: rows regroup across the cluster by join key — the expensive boundary. Then Stage 2 joins." },
+      { box:"#s-3", tasks:"#s-3t", n:4, note:"Second shuffle groups by aggregation key; Stage 3 aggregates and writes the result." },
+    ];
+    stages.forEach(s => { const el=$(s.tasks); if(el) el.innerHTML = Array.from({length:s.n},()=>`<span class="stask"></span>`).join(""); });
+    let running = false;
+    $("#demo-btn").onclick = () => {
+      if (running) return;
+      running = true; $("#demo-btn").disabled = true;
+      stages.forEach(s => { const b=$(s.box); if(b){ b.classList.remove("on","done"); } const el=$(s.tasks); if(el) [...el.children].forEach(t=>t.className="stask"); });
+      let si = 0;
+      (function runStage(){
+        if (si >= stages.length) { const b=$("#demo-btn"); if(b){ b.disabled=false; } running=false; const n=$("#s-note"); if(n) n.textContent = "Done — three stages, two shuffles, eighteen tasks. Photon executes each task on vectorized columnar batches."; return; }
+        const s = stages[si];
+        const box = $(s.box); if (!box) return;
+        box.classList.add("on");
+        const note = $("#s-note"); if (note) note.textContent = s.note;
+        const tasks = [...$(s.tasks).children];
+        let done = 0;
+        tasks.forEach((t) => {
+          const start = 150 + Math.random()*900;
+          timers.push(setTimeout(()=>{ t.classList.add("run"); }, start));
+          timers.push(setTimeout(()=>{ t.classList.remove("run"); t.classList.add("ok"); done++;
+            if (done === tasks.length) { box.classList.remove("on"); box.classList.add("done"); si++; timers.push(setTimeout(runStage, 350)); }
+          }, start + 500 + Math.random()*700));
+        });
+      })();
+    };
+  }
+
+  /* ════════════════ ROUTER ════════════════ */
+  let view = "l0";
+  const depth = t => t === "l0" ? 0 : crumbTrail(t).length - 1;
+  function go(target){
+    clearTimers();
+    const dir = depth(target) < depth(view) ? "out" : "in";
+    view = target;
+    location.hash = target;
+    if (target === "l0") renderL0(dir);
+    else {
+      const [kind, id] = target.split(":");
+      if (kind === "plane") renderPlane(id, dir);
+      else renderDeep(id, dir);
+    }
+    window.scrollTo({top:0});
+  }
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape" || view === "l0") return;
+    const trail = crumbTrail(view);
+    go(trail[trail.length-2].go);
+  });
+  const initial = location.hash.slice(1);
+  const valid = initial === "l0" || (initial.startsWith("plane:") && MODEL.planes[initial.slice(6)]) || (initial.startsWith("deep:") && MODEL.deep[initial.slice(5)]);
+  go(valid ? initial : "l0");
+})();
+</script>
+</body>
+</html>
