@@ -599,6 +599,22 @@ function deepKafka(parent, x, y, w, Z){
   const btn = playBtn(g4, x + w - 92, py + 64, "▶ run");
   const strips = { l: [], f1: [], f2: [] };
   const st = { running:false, timers:[], off:0 };
+  /* seed the log so it never looks empty at rest */
+  {
+    const colors = ["#1f6feb","#8957e5","#bf8700"], slotW = 26;
+    [["l",0],["f1",1],["f2",2]].forEach(pair => {
+      const arr = strips[pair[0]], rowY = rows[pair[1]][1];
+      for (let i = 0; i < 5; i++){
+        const m = el("g", {}, dg);
+        const gx = x + 68 + i * slotW;
+        rect(m, gx, rowY + 3, slotW - 3, 18, colors[i % 3], "none", 3);
+        txt(m, gx + (slotW-3)/2, rowY + 15.5, String(i), 6.6, "#fff", { anchor:"middle", w:"700" });
+        arr.push(m);
+      }
+    });
+    st.off = 5;
+    consText.textContent = "consumer — committed offset: 4 · lag: 0";
+  }
   btn.g.addEventListener("click", () => {
     if (st.running){ st.timers.forEach(t => { clearInterval(t); clearTimeout(t); }); st.timers = []; st.running = false; btn.t.textContent = "▶ run"; return; }
     st.running = true; btn.t.textContent = "⏸ pause";
