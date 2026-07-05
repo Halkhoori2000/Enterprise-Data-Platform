@@ -472,7 +472,7 @@ rect(bgLayer, -2000, -1500, 14000, 9000, "url(#dots)", null, 0);
 
 /* node card */
 function drawNode(parent, x, y, node, zone, W){
-  W = W || W;
+  W = W || NODEW;
   const Z = ZONES[node.journey ? "journey" : zone];
   const titleSize = 22, descSize = 14.5;
   const headH = 46;
@@ -522,6 +522,15 @@ function drawNode(parent, x, y, node, zone, W){
     });
     const aff = lodGroup(parent, 0.7, 2.1);
     txt(aff, x + W - 20, y + totalH - 14, "⌕ zoom for internals", 10.5, Z.acc, { anchor:"end", w:"600" });
+  }
+  const deepArea = l2h + special;
+  if (deepArea > 60){
+    const gh = lodGroup(parent, 0.4, 2.1);
+    const gy = y + h + deepArea / 2;
+    const gs = Math.min(120, deepArea * 0.45);
+    const gi = icon(gh, x + W/2 - gs/2, gy - gs/2 - 12, gs, node.icon || "i-gear", Z.acc);
+    gi.setAttribute("opacity", 0.13);
+    txt(gh, x + W/2, gy + gs/2 + 6, special ? "⌕ internals · demos inside" : "⌕ internals at L2", 12, blend(Z.acc, "#ffffff", 0.4), { anchor:"middle", w:"650" });
   }
   if (node.kafka) deepKafka(parent, x + 20, y + h + l2h, W - 40, Z);
   if (node.delta) deepDelta(parent, x + 20, y + h + l2h, W - 40, Z);
@@ -860,6 +869,15 @@ for (const rail of DATA.rails){
   icon(world, 150, railY + 38, 36, rail.icon, Z.acc);
   txt(world, 212, railY + 50, rail.name.toUpperCase(), 34, blend(Z.acc, "#ffffff", 0.85), { w:"800", ls:"0.06em" });
   txt(world, 212, railY + 84, rail.desc, 17, MUT);
+  const rc = lodGroup(world, 0, 0.5);
+  {
+    const bw = worldW - 246;
+    rail.nodes.forEach((n, i) => {
+      const cx = 106 + bw * 0.3 + i * (bw * 0.62 / 4);
+      iconChip(rc, cx, railY + 60, 22, n.icon, Z.acc);
+      txt(rc, cx + 36, railY + 72, n.name, 34, blend(Z.acc, "#ffffff", 0.8), { w:"650" });
+    });
+  }
   const rg = lodGroup(world, 0.5);
   const bandW = worldW - 246, rw = 1080, rgap = (bandW - 4 * rw) / 5;
   rail.nodes.forEach((n, i) => {
@@ -892,17 +910,23 @@ for (const rail of DATA.rails){
     const card = rect(world, jx, jy, jw, 310, "url(#gr-journey)", blend(Z.acc, BORDER, 0.35), 14, { filter:"url(#sh)" });
     if (i === 0) FRAMES.push({ x: 140, y: jy, w: worldW - 280, h: 310, c: "#56d364" });
     card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
+    const jl0 = lodGroup(world, 0, 0.5);
+    const jl1 = lodGroup(world, 0.5);
     if (j.tour){
       card.classList.add("clickable");
       card.addEventListener("click", startTour);
-      txt(world, jx + 24, jy + 230, "▶ click for a guided tour across the map", 16, "#7ee2a8", { w:"650" });
+      txt(jl1, jx + 24, jy + 230, "▶ click for a guided tour across the map", 16, "#7ee2a8", { w:"650" });
+      txt(jl0, jx + jw/2, jy + 274, "▶ click for a guided tour", 24, "#7ee2a8", { anchor:"middle", w:"650" });
     }
-    iconChip(world, jx + 38, jy + 40, 20, j.icon, Z.acc);
-    txt(world, jx + 70, jy + 48, j.name, 30, TXT, { w:"750" });
-    el("circle", { cx: jx + jw - 32, cy: jy + 38, r: 16, fill: blend(Z.acc, BASE, 0.25) }, world);
-    txt(world, jx + jw - 32, jy + 45, String(i+1), 18, "#7ee2a8", { anchor:"middle", w:"800" });
-    rect(world, jx + 20, jy + 66, jw - 40, 34, blend(Z.acc, BG, 0.08), "none", 8);
-    txt(world, jx + 34, jy + 90, j.stats, 17, GOLD, { w:"600" });
+    iconChip(jl0, jx + jw/2, jy + 100, 34, j.icon, Z.acc);
+    txt(jl0, jx + jw/2, jy + 185, j.name, 46, TXT, { anchor:"middle", w:"750" });
+    txt(jl0, jx + jw/2, jy + 232, j.stats, 26, GOLD, { anchor:"middle", w:"600" });
+    iconChip(jl1, jx + 38, jy + 40, 20, j.icon, Z.acc);
+    txt(jl1, jx + 70, jy + 48, j.name, 30, TXT, { w:"750" });
+    el("circle", { cx: jx + jw - 32, cy: jy + 38, r: 16, fill: blend(Z.acc, BASE, 0.25) }, jl1);
+    txt(jl1, jx + jw - 32, jy + 45, String(i+1), 18, "#7ee2a8", { anchor:"middle", w:"800" });
+    rect(jl1, jx + 20, jy + 66, jw - 40, 34, blend(Z.acc, BG, 0.08), "none", 8);
+    txt(jl1, jx + 34, jy + 90, j.stats, 17, GOLD, { w:"600" });
     const jg = lodGroup(world, 0.5);
     txt(jg, jx + 24, jy + 134, j.desc, 17, MUT, { maxw: jw - 48 });
     if (j.link){
@@ -1062,8 +1086,18 @@ document.getElementById("z-legend").onclick = () => {
   L.style.display = L.style.display === "none" ? "block" : "none";
 };
 window.__mmReady = true;
-vb = { x:-260, y:-140, w: worldW * 1.3 }; apply();
-setTimeout(() => fitAll(), 250);
+/* deep-link viewport: ?x=&y=&w=  (also used for design screenshots) */
+const qp = new URLSearchParams(location.search);
+if (qp.has("w")){
+  vb = { x: +qp.get("x") || 0, y: +qp.get("y") || 0, w: +qp.get("w") || worldW };
+  apply();
+} else {
+  vb = { x:-260, y:-140, w: worldW * 1.3 }; apply();
+  setTimeout(() => fitAll(), 250);
+}
+document.body.setAttribute("data-geo", JSON.stringify({ worldW, worldH, railY,
+  kafka: POS["Confluent Kafka"], delta: POS["Delta Lake"], spark: POS["Spark + Photon"],
+  gold: POS["Gold"], core: POS["Core banking"] }));
 })();
 </script>
 </body>
