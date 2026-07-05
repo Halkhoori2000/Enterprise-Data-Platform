@@ -6,30 +6,32 @@
 <title>Enterprise Banking Data Platform — an explorable map</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg:#0d1117; --surface:#161b22; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --dim:#484f58;
-          --blue:#1f6feb; --lb:#79c0ff; --green:#3fb950; --orange:#f0883e; --purple:#d2a8ff; --red:#f85149; --gold:#eac54f; }
+  :root { --bg:#0a0e14; --surface:#131924; --border:#2b3444; --text:#e6edf3; --muted:#93a1b3; --dim:#4d5a6e; }
   html, body { height: 100%; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; z-index: 10; }
-  header h1 { font-size: 1.05rem; font-weight: 600; }
+  header { background: rgba(19,25,36,0.9); border-bottom: 1px solid var(--border); padding: 12px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; z-index: 10; }
+  header h1 { font-size: 1.05rem; font-weight: 650; letter-spacing: 0.01em; }
   header .subtitle { font-size: 0.75rem; color: var(--muted); }
-  .btn { padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; border: 1px solid var(--border); background: #21262d; color: var(--text); text-decoration: none; cursor: pointer; font-family: inherit; }
-  .disclosure { background: rgba(210,168,255,0.06); border-bottom: 1px solid #3d2d5c; padding: 5px 22px; font-size: 0.72rem; color: var(--purple); text-align: center; z-index: 10; }
-  #map-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+  .btn { padding: 6px 14px; border-radius: 7px; font-size: 0.8rem; border: 1px solid var(--border); background: #1c2433; color: var(--text); text-decoration: none; cursor: pointer; font-family: inherit; }
+  .disclosure { background: linear-gradient(90deg, rgba(137,87,229,0.10), rgba(31,111,235,0.10)); border-bottom: 1px solid #322a52; padding: 5px 22px; font-size: 0.72rem; color: #c8b1f5; text-align: center; z-index: 10; }
+  #map-wrap { flex: 1; position: relative; overflow: hidden; cursor: grab; background: radial-gradient(1200px 700px at 60% -10%, #101a2e 0%, #0a0e14 55%); }
   #map-wrap.dragging { cursor: grabbing; }
   svg { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-select: none; }
   .hud { position: absolute; z-index: 20; display: flex; gap: 8px; align-items: center; }
-  .hud.tl { top: 12px; left: 14px; }
-  .hud.tr { top: 12px; right: 14px; }
-  .hud.bl { bottom: 12px; left: 14px; font-size: 0.72rem; color: var(--dim); background: rgba(13,17,23,0.8); padding: 6px 12px; border-radius: 8px; border: 1px solid #21262d; }
-  .hudbtn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: rgba(22,27,34,0.92); color: var(--text); font-size: 1rem; cursor: pointer; }
+  .hud.tl { top: 12px; left: 14px; } .hud.tr { top: 12px; right: 14px; }
+  .hud.bl { bottom: 12px; left: 14px; font-size: 0.72rem; color: var(--dim); background: rgba(10,14,20,0.82); padding: 6px 12px; border-radius: 9px; border: 1px solid #1c2433; }
+  .hudbtn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: rgba(19,25,36,0.92); color: var(--text); font-size: 1rem; cursor: pointer; }
   .hudbtn.wide { width: auto; padding: 0 14px; font-size: 0.78rem; }
-  .hudbtn:hover { border-color: var(--blue); }
-  #zoomlvl { font-size: 0.72rem; color: var(--muted); background: rgba(22,27,34,0.92); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+  .hudbtn:hover { border-color: #58a6ff; }
+  #zoomlvl { font-size: 0.72rem; color: var(--muted); background: rgba(19,25,36,0.92); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; }
   #errbar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 50; background: #67060c; color: #ffd7d5; font-size: 0.75rem; padding: 6px 14px; }
-  footer { background: var(--surface); border-top: 1px solid #21262d; text-align: center; padding: 8px; color: var(--dim); font-size: 0.7rem; z-index: 10; }
+  footer { background: rgba(19,25,36,0.9); border-top: 1px solid #1c2433; text-align: center; padding: 7px; color: var(--dim); font-size: 0.7rem; z-index: 10; }
   text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   .clickable { cursor: pointer; }
+  .card { transition: stroke 0.15s; }
+  .card:hover { stroke: var(--acc, #58a6ff); stroke-width: 1.6; }
+  .flowline { stroke-dasharray: 16 14; animation: dash 1.6s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -30; } }
 </style>
 </head>
 <body>
@@ -45,20 +47,20 @@
   <div id="errbar"></div>
   <div class="hud tl"><span id="zoomlvl">zoom —</span></div>
   <div class="hud tr">
-    <button class="hudbtn" id="z-in" title="zoom in">＋</button>
-    <button class="hudbtn" id="z-out" title="zoom out">－</button>
+    <button class="hudbtn" id="z-in">＋</button>
+    <button class="hudbtn" id="z-out">－</button>
     <button class="hudbtn wide" id="z-fit">fit</button>
   </div>
-  <div class="hud bl" id="hint">drag = move · scroll / pinch = zoom · double-click = dive · click a box = fly to it · fit = whole map</div>
+  <div class="hud bl" id="hint">drag = move · scroll / pinch = zoom · double-click = dive · click a card = fly to it · esc = whole map</div>
 </div>
-<footer>Hamdan Alkhoori · An explorable, generalized model of an enterprise banking data platform — tool internals are public engineering knowledge; delivery stories link to their case studies.</footer>
+<footer>Hamdan Alkhoori · An explorable, generalized model of an enterprise banking data platform — tool internals are public engineering knowledge; deliveries link to their case studies.</footer>
 
 <script>
 (function(){
 "use strict";
 window.addEventListener("error", e => { const b = document.getElementById("errbar"); b.style.display = "block"; b.textContent = "⚠ " + e.message; });
 
-/* ═══════════════ helpers ═══════════════ */
+/* ═══════ helpers ═══════ */
 const NS = "http://www.w3.org/2000/svg";
 function el(tag, attrs, parent){
   const n = document.createElementNS(NS, tag);
@@ -66,7 +68,7 @@ function el(tag, attrs, parent){
   if (parent) parent.appendChild(n);
   return n;
 }
-function wrap(str, size, maxw){
+function wrapText(str, size, maxw){
   const cw = size * 0.52;
   const words = String(str).split(" ");
   const lines = []; let cur = "";
@@ -77,25 +79,124 @@ function wrap(str, size, maxw){
   if (cur) lines.push(cur);
   return lines;
 }
-function txt(parent, x, y, str, size, color, opts){
-  opts = opts || {};
-  const t = el("text", { x, y, "font-size": size, fill: color, "font-weight": opts.w || "normal",
-    "text-anchor": opts.anchor || "start", "letter-spacing": opts.ls || "normal" }, parent);
-  if (opts.maxw){
-    const lines = wrap(str, size, opts.maxw);
-    lines.forEach((ln,i) => el("tspan", { x, dy: i ? size*1.32 : 0 }, t).textContent = ln);
-    t._h = lines.length * size * 1.32;
-  } else { t.textContent = str; t._h = size * 1.32; }
+function txt(parent, x, y, str, size, color, o){
+  o = o || {};
+  const t = el("text", { x, y, "font-size": size, fill: color, "font-weight": o.w || "normal",
+    "text-anchor": o.anchor || "start", "letter-spacing": o.ls || "0" }, parent);
+  if (o.maxw){
+    const lines = wrapText(str, size, o.maxw);
+    lines.forEach((ln,i) => el("tspan", { x, dy: i ? size*1.34 : 0 }, t).textContent = ln);
+    t._lines = lines.length;
+  } else { t.textContent = str; t._lines = 1; }
   return t;
 }
-function box(parent, x, y, w, h, fill, stroke, rx){
-  return el("rect", { x, y, width: w, height: h, fill, stroke, "stroke-width": 1, rx: rx == null ? 8 : rx }, parent);
+const linesOf = (str, size, maxw) => wrapText(str, size, maxw).length;
+function rect(parent, x, y, w, h, fill, stroke, rx, o){
+  o = o || {};
+  const r = el("rect", { x, y, width: w, height: h, fill, stroke: stroke || "none", "stroke-width": o.sw || 1, rx: rx == null ? 10 : rx }, parent);
+  if (o.filter) r.setAttribute("filter", o.filter);
+  return r;
+}
+function blend(hex, base, a){
+  const p = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const A = p(hex), B = p(base);
+  const m = A.map((v,i) => Math.round(v*a + B[i]*(1-a)));
+  return "#" + m.map(v => v.toString(16).padStart(2,"0")).join("");
 }
 
-/* ═══════════════ LOD registry ═══════════════ */
+/* ═══════ design system ═══════ */
+const BASE = "#131924", BG = "#0a0e14", BORDER = "#2b3444", TXT = "#e6edf3", MUT = "#93a1b3", DIM = "#4d5a6e", GOLD = "#eac54f";
+const ZONES = {
+  sources:   { acc:"#2dd4bf" }, ingest: { acc:"#58a6ff" }, process: { acc:"#f0883e" },
+  serve:     { acc:"#a371f7" }, consume:{ acc:"#3fb950" },
+  security:  { acc:"#f47067" }, governance: { acc:"#d2a8ff" }, journey: { acc:"#56d364" },
+};
+for (const z in ZONES){
+  const Z = ZONES[z];
+  Z.tint   = blend(Z.acc, BASE, 0.10);
+  Z.tint2  = blend(Z.acc, BASE, 0.20);
+  Z.faint  = blend(Z.acc, BG, 0.06);
+  Z.border = blend(Z.acc, BORDER, 0.38);
+  Z.soft   = blend(Z.acc, "#0d1420", 0.14);
+}
+
+/* ═══════ svg + defs ═══════ */
+const wrapEl = document.getElementById("map-wrap");
+const svg = el("svg", {}, wrapEl);
+const defs = el("defs", {}, svg);
+el("feDropShadow", { dx:0, dy:5, stdDeviation:7, "flood-color":"#000", "flood-opacity":0.5 }, el("filter", { id:"sh", x:"-20%", y:"-20%", width:"140%", height:"160%" }, defs));
+el("feDropShadow", { dx:0, dy:2, stdDeviation:3, "flood-color":"#000", "flood-opacity":0.45 }, el("filter", { id:"sh2", x:"-20%", y:"-20%", width:"140%", height:"160%" }, defs));
+for (const z in ZONES){
+  const g = el("linearGradient", { id:"gr-"+z, x1:0, y1:0, x2:0, y2:1 }, defs);
+  el("stop", { offset:"0%", "stop-color": ZONES[z].tint2 }, g);
+  el("stop", { offset:"100%", "stop-color": blend(ZONES[z].acc, BASE, 0.04) }, g);
+  const gb = el("linearGradient", { id:"grb-"+z, x1:0, y1:0, x2:1, y2:0 }, defs);
+  el("stop", { offset:"0%", "stop-color": blend(ZONES[z].acc, BASE, 0.55) }, gb);
+  el("stop", { offset:"100%", "stop-color": blend(ZONES[z].acc, BASE, 0.18) }, gb);
+}
+["bronze:#c98b3f","silver:#aab4c0","gold:#eac54f"].forEach(s => {
+  const [nm, c] = s.split(":");
+  const g = el("linearGradient", { id:"cyl-"+nm, x1:0, y1:0, x2:1, y2:0 }, defs);
+  el("stop", { offset:"0%", "stop-color": blend(c, "#000000", 0.55) }, g);
+  el("stop", { offset:"45%", "stop-color": c }, g);
+  el("stop", { offset:"100%", "stop-color": blend(c, "#000000", 0.45) }, g);
+});
+/* dotted background pattern */
+{
+  const pat = el("pattern", { id:"dots", width:70, height:70, patternUnits:"userSpaceOnUse" }, defs);
+  el("circle", { cx:1.5, cy:1.5, r:1.5, fill:"#182031" }, pat);
+}
+/* icon symbols (24×24, stroke) */
+function sym(id, inner){
+  const s = el("symbol", { id, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":1.9, "stroke-linecap":"round", "stroke-linejoin":"round" }, defs);
+  s.innerHTML = inner;
+}
+sym("i-db",    '<ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>');
+sym("i-stream",'<path d="M3 7h11"/><path d="M3 12h15"/><path d="M3 17h11"/><path d="M14 4l4 3-4 3"/><path d="M18 9l4 3-4 3"/><path d="M14 14l4 3-4 3"/>');
+sym("i-plug",  '<circle cx="9" cy="12" r="5"/><path d="M14 12h7"/><path d="M18 8v8"/>');
+sym("i-book",  '<path d="M4 4h9a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M16 7h4v13h-4"/><path d="M7 8h6M7 12h6"/>');
+sym("i-flow",  '<rect x="2" y="4" width="7" height="6" rx="1.5"/><rect x="15" y="14" width="7" height="6" rx="1.5"/><path d="M9 7h5a4 4 0 014 4v3"/>');
+sym("i-drop",  '<path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z"/><path d="M8.5 14a3.5 3.5 0 003.5 3.5"/>');
+sym("i-file",  '<path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h7M9 17h7"/>');
+sym("i-layers",'<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/>');
+sym("i-burst", '<path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M19 5l-3.5 3.5M8.5 15.5L5 19"/>');
+sym("i-gear",  '<circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/>');
+sym("i-delta", '<path d="M12 3L22 21H2L12 3z"/><path d="M12 9l6.5 10h-13L12 9z"/>');
+sym("i-funnel",'<path d="M3 4h18l-7 8v7l-4 2v-9L3 4z"/>');
+sym("i-table", '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/>');
+sym("i-share", '<circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.3 10.8l7.4-4M8.3 13.2l7.4 4"/>');
+sym("i-api",   '<path d="M8 5L3 12l5 7"/><path d="M16 5l5 7-5 7"/><path d="M13 4l-2 16"/>');
+sym("i-bars",  '<rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="17" rx="1"/>');
+sym("i-spark", '<path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4L12 2z"/>');
+sym("i-flask", '<path d="M10 3h4M11 3v6l-6 10a2 2 0 002 2h10a2 2 0 002-2L13 9V3"/><path d="M7.5 15h9"/>');
+sym("i-shield",'<path d="M12 2l8 3.5V12c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5.5L12 2z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>');
+sym("i-person",'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>');
+sym("i-key",   '<circle cx="8" cy="14" r="4.5"/><path d="M11.5 10.5L20 2M16 6l3 3M13 9l2.5 2.5"/>');
+sym("i-lock",  '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>');
+sym("i-net",   '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.8 7L6.3 16M13.2 7l4.5 9M7.5 18h9"/>');
+sym("i-check", '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9"/>');
+sym("i-map",   '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>');
+sym("i-bag",   '<path d="M5 8h14l-1.2 12H6.2L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/>');
+sym("i-phone", '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/>');
+sym("i-bolt",  '<path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/>');
+sym("i-clock", '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>');
+sym("i-card",  '<rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h5"/>');
+sym("i-coin",  '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1 1.1-1.8 2.5-1.8s2.5.8 2.5 1.8-1 1.6-2.5 2-2.5 1-2.5 2 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.8"/>');
+sym("i-house", '<path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>');
+sym("i-genie", '<path d="M12 3l1.5 4L18 8.5 13.5 10 12 14l-1.5-4L6 8.5 10.5 7 12 3z"/><path d="M18 14l.9 2.4L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.6L18 14z"/>');
+
+function icon(parent, x, y, size, id, color){
+  const u = el("use", { href:"#"+id, x, y, width:size, height:size }, parent);
+  u.style.color = color;
+  return u;
+}
+
+const world = el("g", {}, svg);
+
+/* ═══════ LOD ═══════ */
 const lod = [];
 function lodGroup(parent, minK, maxK){
-  const g = el("g", { opacity: 0 }, parent);
+  const g = el("g", { opacity:0 }, parent);
   g.style.pointerEvents = "none";
   lod.push({ g, minK, maxK: maxK || Infinity });
   return g;
@@ -108,451 +209,445 @@ function updateLOD(k){
   }
 }
 
-/* ═══════════════ content ═══════════════ */
-const C = {
-  colTitle:"#e6edf3", muted:"#8b949e", dim:"#484f58", lb:"#79c0ff", green:"#3fb950",
-  orange:"#f0883e", purple:"#d2a8ff", gold:"#eac54f", red:"#f85149",
-  surface:"#161b22", surface2:"#1c2128", bg:"#0d1117", border:"#30363d",
-};
-
-/* deep content attached per node: l2 = cards at k≥2.2 ; l3 = sub-panel at k≥4.5 ; l4 = deepest at k≥8 */
+/* ═══════ content (same model, trimmed) ═══════ */
 const DATA = {
   pillars: ["Data Hydration","Data Platform","Data Governance","Data Privacy","Data as a Product","Data Literacy"],
   columns: [
-    { name:"Sources", tag:"WHERE DATA IS BORN", lanes:[
+    { id:"sources", name:"Sources", tag:"where data is born", icon:"i-db", lanes:[
       { title:"Transactional & product systems", nodes:[
-        { name:"Core banking", desc:"Accounts, customers, transactions — the system of record; its database changes are captured continuously via CDC.",
-          l2:[["System of record","Every balance and transaction starts here; nothing downstream is allowed to disagree with it."],
-              ["Captured, not queried","CDC reads the database's change log — the source never feels the platform's presence."]] },
-        { name:"Cards", desc:"Issuing & acquiring, conventional and Islamic portfolios — batch positions plus event streams.",
-          l2:[["Two books","Conventional and Islamic portfolios keep separate sheets and different fields — profit rate, not interest rate."],
-              ["Mixed shapes","Monthly position files and real-time authorization events from the same domain."]] },
-        { name:"Payments", desc:"Transfers, clearing, gateway events — naturally streaming-shaped data.",
-          l2:[["Event-native","A payment is a sequence of events (initiated, cleared, settled) — streaming fits it exactly."]] },
-        { name:"Lending & mortgages", desc:"Originations, servicing, collateral — batch extracts and reference data.",
-          l2:[["Slow-moving, high-stakes","Positions change monthly, but every field feeds risk models — quality beats speed here."]] },
-        { name:"Treasury & finance", desc:"Positions, GL, regulatory ledgers — end-of-period batch by nature.",
-          l2:[["Period-end world","The GL closes on a calendar; ingestion follows it with watermarked batches."]] },
+        { name:"Core banking", icon:"i-db", desc:"Accounts, customers, transactions — the system of record; its changes captured continuously via CDC.",
+          l2:[["System of record","Every balance starts here; nothing downstream may disagree with it."],["Captured, not queried","CDC reads the database's change log — the source never feels the platform."]] },
+        { name:"Cards", icon:"i-card", desc:"Issuing & acquiring, conventional and Islamic portfolios — batch positions plus event streams.",
+          l2:[["Two books","Conventional and Islamic keep different fields — profit rate, not interest rate."],["Mixed shapes","Monthly position files and real-time authorization events, same domain."]] },
+        { name:"Payments", icon:"i-coin", desc:"Transfers, clearing, gateway events — naturally streaming-shaped data.",
+          l2:[["Event-native","A payment is a sequence — initiated, cleared, settled; streaming fits exactly."]] },
+        { name:"Lending & mortgages", icon:"i-house", desc:"Originations, servicing, collateral — batch extracts and reference data.",
+          l2:[["Slow, high-stakes","Positions move monthly, but every field feeds risk models — quality beats speed."]] },
+        { name:"Treasury & finance", icon:"i-bars", desc:"Positions, GL, regulatory ledgers — end-of-period batch by nature.",
+          l2:[["Period-end world","The GL closes on a calendar; ingestion follows with watermarked batches."]] },
       ]},
       { title:"People & channels", nodes:[
-        { name:"Digital channels", desc:"Mobile and web activity — high-volume behavioural events.",
-          l2:[["Volume over size","Millions of small events; partitioned streams absorb them without breaking a sweat."]] },
-        { name:"CRM & operations", desc:"Customer interactions, cases, campaigns.",
-          l2:[["Context data","Joins onto transactions to explain the why behind the what."]] },
-        { name:"Risk systems", desc:"Ratings, provisions, exposures — the consumers who care most about lineage.",
-          l2:[["Both source and consumer","Risk feeds data in, and consumes Gold — with lineage as its non-negotiable."]] },
+        { name:"Digital channels", icon:"i-phone", desc:"Mobile and web activity — high-volume behavioural events.",
+          l2:[["Volume over size","Millions of small events; partitioned streams absorb them easily."]] },
+        { name:"CRM & operations", icon:"i-person", desc:"Customer interactions, cases, campaigns — the context data.",
+          l2:[["The why","Joins onto transactions to explain the why behind the what."]] },
+        { name:"Risk systems", icon:"i-shield", desc:"Ratings, provisions, exposures — the consumers who care most about lineage.",
+          l2:[["Source and consumer","Risk feeds data in and consumes Gold — lineage is its non-negotiable."]] },
       ]},
       { title:"The long tail", nodes:[
-        { name:"Manual Excel history", desc:"Years of monthly position files, exported by hand, drifting in shape — the Historic Data Loading problem.", journey:true,
-          l2:[["535 sheets, 8 systems, 41+ GB","Headers buried under title rows, columns renaming across years, corrupt workbooks."],
-              ["Solved on this platform","Metadata-driven pipeline; see the journey panel at the bottom of the map →"]] },
-        { name:"Partner & external feeds", desc:"Bureaus, processors, market data — files and APIs on their own schedules.",
-          l2:[["Their schedule, not ours","Arrival-driven ingestion; the platform reacts to files, it doesn't wait for them."]] },
+        { name:"Manual Excel history", icon:"i-file", journey:true, desc:"Years of monthly files, exported by hand, drifting in shape — the Historic Data Loading problem.",
+          l2:[["535 sheets · 8 systems · 41+ GB","Headers under title rows, columns renaming across years, corrupt workbooks."],["Solved on this platform","Metadata-driven pipeline — see the journey panel below the map."]] },
+        { name:"Partner & external feeds", icon:"i-share", desc:"Bureaus, processors, market data — files and APIs on their own schedules.",
+          l2:[["Their schedule","Arrival-driven ingestion; the platform reacts to files, never waits."]] },
       ]},
     ]},
-    { name:"Ingest", tag:"GETTING IT IN", lanes:[
+    { id:"ingest", name:"Ingest", tag:"getting it in", icon:"i-stream", lanes:[
       { title:"Streaming — change data capture", nodes:[
-        { name:"Confluent Kafka", desc:"The streaming backbone: real-time change events from core databases, organized for isolation and reuse.", kafka:true,
-          l2:[["One org, many clusters","Production, dev and test clusters — plus dedicated clusters per major use case, so workloads never starve each other."],
-              ["Cluster linking","Topics replicate between clusters with no custom copy jobs — produce once, consume anywhere."],
-              ["Reuse over rebuild","New use cases tap existing CDC topics and just consume; capture happens once per source."],
-              ["Topics & partitions","A topic is a named stream, split into partitions for parallelism. Ordering holds within a partition — never across."]] },
-        { name:"Kafka Connect", desc:"CDC and JDBC connectors capture inserts, updates, deletes into topics — configuration, not code.",
-          l2:[["CDC connectors","Read the database's own change log — every change becomes an event, zero query load on the source."],
-              ["JDBC connectors","For sources without log access: incremental queries by key or timestamp — a watermark, streamed."],
-              ["Workers & tasks","Connectors run as tasks on a worker fleet; a dead task is rescheduled, a dead worker's tasks move."],
-              ["Secrets & promotion","Configs reference a secrets store and promote UAT → PROD like code — reviewed and versioned."]] },
-        { name:"Schema Registry", desc:"Schemas as contracts between producers and consumers — evolution without breakage.",
-          l2:[["Contracts, enforced","Every topic's message shape is registered and versioned; consumers read the schema, not guesswork."],
-              ["Compatibility modes","Backward, forward or full — the registry rejects changes that would break the promise."],
-              ["2am prevention","Removing a required field fails at registration — not in production."]] },
+        { name:"Confluent Kafka", icon:"i-stream", kafka:true, desc:"The streaming backbone: real-time change events from core databases, organized for isolation and reuse.",
+          l2:[["One org, many clusters","PROD, dev, test — plus dedicated clusters per use case, so workloads never starve each other."],
+              ["Cluster linking","Topics replicate between clusters without copy jobs — produce once, consume anywhere."],
+              ["Reuse over rebuild","New use cases tap existing CDC topics; capture happens once per source."],
+              ["Topics & partitions","A topic is a named stream split into partitions. Ordering holds within a partition — never across."]] },
+        { name:"Kafka Connect", icon:"i-plug", desc:"CDC and JDBC connectors capture inserts, updates, deletes into topics — configuration, not code.",
+          l2:[["CDC connectors","Read the database's own change log — zero query load on the source."],
+              ["JDBC connectors","No log access? Incremental queries by key or timestamp — a watermark, streamed."],
+              ["Workers & tasks","Connectors run as distributed tasks; dead tasks reschedule, dead workers hand over."],
+              ["Secrets & promotion","Configs reference a vault and promote UAT → PROD like code."]] },
+        { name:"Schema Registry", icon:"i-book", desc:"Schemas as contracts between producers and consumers — evolution without breakage.",
+          l2:[["Contracts, enforced","Every topic's shape is registered and versioned; consumers read schema, not guesswork."],
+              ["Compatibility modes","Backward, forward or full — breaking changes are rejected at registration."],
+              ["2am prevention","Removing a required field fails at commit time — not in production."]] },
       ]},
       { title:"Batch — orchestrated copy", nodes:[
-        { name:"ADF pipelines", desc:"Control-table-driven Lookup → ForEach → Copy, with schedules, triggers and integration runtimes.",
-          l2:[["Lookup → ForEach → Copy","Look up what to move, loop over it, copy each item — one pattern from one file to thousands."],
-              ["Triggers","Schedule, tumbling window, or event (a file arrived) — pipelines start themselves."],
-              ["Integration runtimes","Self-hosted runtimes sit inside the private network and reach sources the cloud can't."],
-              ["Parameterised","Source, path and period arrive as parameters from control tables — one pipeline, many systems."]] },
-        { name:"Watermark control tables", desc:"Metadata remembers what's loaded; each run takes only what's above the watermark — idempotent by design.",
-          l2:[["High-water mark","A control table records the latest loaded period per source; new runs load above it, then advance it."],
-              ["One row per unit of work","Each file/sheet/period is a row: path, target, parameters, active flag."],
-              ["Idempotent","Each unit overwrites its own target — re-running a row is safe, replaying a batch is safe."],
-              ["Proven at 535-sheet scale","This exact pattern drove Historic Data Loading — see the journey panel below."]] },
+        { name:"ADF pipelines", icon:"i-flow", desc:"Control-table-driven Lookup → ForEach → Copy, with schedules, triggers, integration runtimes.",
+          l2:[["Lookup → ForEach → Copy","Look up what to move, loop, copy — one pattern from one file to thousands."],
+              ["Triggers","Schedule, tumbling window, or event — pipelines start themselves."],
+              ["Integration runtimes","Self-hosted runtimes reach private sources the cloud can't touch."],
+              ["Parameterised","Source, path, period arrive as parameters — one pipeline, many systems."]] },
+        { name:"Watermark control tables", icon:"i-drop", desc:"Metadata remembers what's loaded; runs take only what's above the watermark — idempotent by design.",
+          l2:[["High-water mark","A control table records the latest loaded period; runs load above it, then advance it."],
+              ["A row per unit of work","Each file/sheet/period: path, target, parameters, active flag."],
+              ["Idempotent","Each unit overwrites its own target — replaying is always safe."],
+              ["Proven at 535 sheets","This exact pattern drove Historic Data Loading — journey below."]] },
       ]},
       { title:"Files & lakehouse-native", nodes:[
-        { name:"Auto Loader", desc:"Watches landing paths, checkpoints what it has seen, processes each new file exactly once.",
-          l2:[["Two discovery modes","Directory listing for simple cases; storage event notifications when folders get huge."],
-              ["Checkpointed state","Processed files live in a checkpoint — restarts resume, never double-load."],
-              ["Rescued data","Values that don't fit the schema land in a rescue column — nothing silently lost."]] },
-        { name:"Delta Live Tables", desc:"Declarative pipelines with data-quality expectations built in.",
-          l2:[["Declared, not scripted","State what each table should be; DLT works out order, parallelism, retries, infrastructure."],
-              ["Expectations","Quality rules as code: warn, drop, or fail — metrics recorded per run, per rule."],
-              ["Generated lineage","The dependency graph derives from the declarations — the diagram is computed, not drawn."]] },
-        { name:"Lakehouse Federation", desc:"Query sources in place when moving the data isn't worth it.",
-          l2:[["Foreign catalogs","An external database mounts as a catalog — same permission model as native tables."],
+        { name:"Auto Loader", icon:"i-bolt", desc:"Watches landing paths, checkpoints what it's seen, processes each new file exactly once.",
+          l2:[["Two discovery modes","Directory listing, or storage-event notifications when folders get huge."],
+              ["Checkpointed","Processed files live in a checkpoint — restarts resume, never double-load."],
+              ["Rescued data","Values that don't fit the schema land in a rescue column — nothing lost."]] },
+        { name:"Delta Live Tables", icon:"i-layers", desc:"Declarative pipelines with data-quality expectations built in.",
+          l2:[["Declared, not scripted","State what each table should be; DLT works out order, parallelism, retries."],
+              ["Expectations","Quality rules as code: warn, drop or fail — metrics per run, per rule."],
+              ["Computed lineage","The dependency graph derives from declarations — never drawn by hand."]] },
+        { name:"Lakehouse Federation", icon:"i-api", desc:"Query sources in place when moving the data isn't worth it.",
+          l2:[["Foreign catalogs","External databases mount as catalogs — same permission model as native."],
               ["Pushdown","Filters run at the source; only results travel."]] },
       ]},
     ]},
-    { name:"Transform & Process", tag:"MAKING IT USABLE", lanes:[
-      { title:"Medallion — the refinement path", flow:true, nodes:[
-        { name:"Bronze", desc:"As-produced, full fidelity, lineage metadata on every row. Nothing is ever altered here.", tone:"bronze",
-          l2:[["Raw is sacred","Failed conformance never costs source data — Bronze always holds the original truth."],
-              ["Lineage stamped","Source system, file, period, ingest time — carried on every record from the first write."]] },
-        { name:"Silver", desc:"Conformed to the enterprise data model: typed, deduplicated, standardised.", tone:"silver",
-          l2:[["The enterprise model","One agreed definition of customer, account, transaction — every source maps into it."],
-              ["Deterministic dedup","Drop / merge / prefix / quarantine — duplicates resolved by rule, never by guess."]] },
-        { name:"Gold", desc:"Business-specific marts: metrics, aggregates, compliance fields — query-ready.", tone:"gold",
-          l2:[["Built for questions","Facts and dimensions shaped for the business — NPL ratios, exposures, period comparisons."],
-              ["Compliance-grade","IFRS 9 / Basel-style fields computed under governance with lineage back to source."]] },
+    { id:"process", name:"Transform & Process", tag:"making it usable", icon:"i-gear", lanes:[
+      { title:"Medallion — the refinement path", medallion:true, nodes:[
+        { name:"Bronze", tone:"bronze", desc:"As-produced, full fidelity, lineage on every row. Never altered.",
+          l2:[["Raw is sacred","Failed conformance never costs source data — Bronze holds the original truth."],["Lineage stamped","System, file, period, ingest time — on every record from the first write."]] },
+        { name:"Silver", tone:"silver", desc:"Conformed to the enterprise model: typed, deduplicated, standardised.",
+          l2:[["The enterprise model","One agreed definition of customer, account, transaction."],["Deterministic dedup","Drop / merge / prefix / quarantine — resolved by rule, never by guess."]] },
+        { name:"Gold", tone:"gold", desc:"Business marts: metrics, aggregates, compliance fields — query-ready.",
+          l2:[["Built for questions","Facts and dimensions shaped for the business — ratios, exposures, comparisons."],["Compliance-grade","IFRS 9 / Basel-style fields computed under governance, lineage to source."]] },
       ]},
       { title:"Compute", nodes:[
-        { name:"Spark + Photon", desc:"Distributed compute: describe the whole job, execute lazily, in parallel tasks.", spark:true,
-          l2:[["Driver & executors","The driver plans; executors do. One driver directing many workers across machines."],
-              ["Lazy → DAG","Transformations build a graph; nothing runs until an action forces it — then it optimizes as one."],
-              ["Stages & shuffles","The DAG splits at shuffle boundaries, where data regroups across the cluster — the expensive part."],
-              ["Photon","A vectorized C++ engine under the same API — several times faster on SQL-shaped work."]] },
-        { name:"Databricks Workflows", desc:"Jobs, dependencies, retries, alerts — the operational wrapper around every pipeline.",
-          l2:[["Task graphs","A job is a DAG of notebooks, pipelines and SQL — step B waits for step A."],
-              ["Right-sized compute","Each run gets policy-compliant job clusters that exist only for the run."],
-              ["Failure is loud","Retries with backoff, timeouts, alerts — a broken pipeline never fails silently."]] },
+        { name:"Spark + Photon", icon:"i-spark", spark:true, desc:"Distributed compute: describe the whole job, execute lazily, in parallel tasks.",
+          l2:[["Driver & executors","The driver plans; executors do — one brain, many hands."],
+              ["Lazy → DAG","Transformations build a graph; an action triggers it — optimized as one."],
+              ["Stages & shuffles","The DAG splits where data regroups across the cluster — the expensive part."],
+              ["Photon","A vectorized C++ engine under the same API — several times faster on SQL work."]] },
+        { name:"Databricks Workflows", icon:"i-gear", desc:"Jobs, dependencies, retries, alerts — the operational wrapper around every pipeline.",
+          l2:[["Task graphs","A job is a DAG of notebooks, pipelines, SQL — step B waits for step A."],
+              ["Right-sized compute","Policy-compliant job clusters that exist only for the run."],
+              ["Failure is loud","Retries, timeouts, alerts — nothing fails silently."]] },
       ]},
       { title:"Storage & format", nodes:[
-        { name:"Delta Lake", desc:"ACID tables on the lake: a transaction log makes files behave like a database.", delta:true,
-          l2:[["ACID on object storage","Readers see complete commits or nothing; writers fully succeed or leave no trace."],
-              ["Time travel","Every version queryable — the table as of yesterday, or as of version 41."],
-              ["Schema enforcement","Non-matching writes are rejected unless evolution is explicit — drift becomes a decision."],
+        { name:"Delta Lake", icon:"i-delta", delta:true, desc:"ACID tables on the lake: a transaction log makes files behave like a database.",
+          l2:[["ACID on object storage","Readers see complete commits or nothing; writers succeed fully or vanish."],
+              ["Time travel","Every version queryable — the table as of yesterday, or version 41."],
+              ["Schema enforcement","Non-matching writes rejected unless evolution is explicit — drift becomes a decision."],
               ["Stream + batch, one table","A stream appends while a batch reads consistently; the log serializes them."]] },
-        { name:"ADLS Gen2", desc:"Hierarchical, cheap, durable — the physical home of every layer.",
-          l2:[["Real directories","Hierarchical namespace with atomic renames — what engines and ACLs actually need."],
-              ["Zones as paths","Landing, Bronze, Silver, Gold live as governed hierarchies — per system, per period."]] },
-        { name:"ETL framework & mapping", desc:"Reusable Extract-Clean-Transform-Load components, driven by mapping metadata — not per-source scripts.",
+        { name:"ADLS Gen2", icon:"i-db", desc:"Hierarchical, cheap, durable — the physical home of every layer.",
+          l2:[["Real directories","Hierarchical namespace with atomic renames — what engines and ACLs need."],
+              ["Zones as paths","Landing, Bronze, Silver, Gold as governed hierarchies — per system, per period."]] },
+        { name:"ETL framework & mapping", icon:"i-funnel", desc:"Reusable Extract-Clean-Transform-Load components, driven by mapping metadata.",
           l2:[["Framework, not scripts","The same components run for every system, configured by metadata."],
-              ["Mappings are metadata","Source→Bronze→Silver→Gold field maps live in config: reviewable, versioned, signed off."],
-              ["Rejected-data stores","Records that fail rules land with reasons — visible, reprocessable, never dropped."],
-              ["Common services","Logging, audit, exceptions, archiving, parameterisation — written once, used everywhere."]] },
+              ["Mappings are metadata","Source→Bronze→Silver→Gold field maps live in config — versioned, signed off."],
+              ["Rejected-data stores","Failures land with reasons — visible, reprocessable, never dropped."],
+              ["Common services","Logging, audit, exceptions, archiving — written once, used everywhere."]] },
       ]},
     ]},
-    { name:"Serve", tag:"MAKING IT CONSUMABLE", lanes:[
+    { id:"serve", name:"Serve", tag:"making it consumable", icon:"i-table", lanes:[
       { title:"Query & warehouse", nodes:[
-        { name:"Databricks SQL", desc:"Warehouse-grade SQL directly on Gold — no copies into a separate warehouse.",
-          l2:[["Elastic warehouses","Compute pools that spin up on demand, autoscale with concurrency, suspend when idle."],
+        { name:"Databricks SQL", icon:"i-table", desc:"Warehouse-grade SQL directly on Gold — no copies into a separate warehouse.",
+          l2:[["Elastic warehouses","Spin up on demand, autoscale with concurrency, suspend when idle."],
               ["Photon + caching","Vectorized execution and result caches make dashboards interactive."],
-              ["Catalog-governed","The permissions that govern pipelines govern queries — analysts see what they're granted."]] },
-        { name:"Semantic & reporting layer", desc:"Business definitions in one place — every tool sees the same truth.",
-          l2:[["Define once","A metric defined once serves every dashboard — no two versions of 'NPL ratio'."]] },
+              ["Catalog-governed","Pipeline permissions govern queries too — you see what you're granted."]] },
+        { name:"Semantic & reporting layer", icon:"i-book", desc:"Business definitions in one place — every tool sees the same truth.",
+          l2:[["Define once","A metric defined once serves every dashboard — no two NPL ratios."]] },
       ]},
       { title:"Sharing & interfaces", nodes:[
-        { name:"Delta Sharing", desc:"Open-protocol sharing — recipients read live tables, no copies, revocable.",
-          l2:[["Shares & recipients","A share is a named bundle of tables; recipients read it from any tool speaking the protocol."],
-              ["No copies drift","Recipients query the live table — no exports going stale in inboxes."],
-              ["Cross-boundary","Between workspaces, organizations, clouds — internal tenants and partners alike."]] },
-        { name:"Serving endpoints & APIs", desc:"Analytics, reports and applications consume through governed endpoints.",
-          l2:[["Governed interfaces","Every programmatic consumer authenticates, and every access is auditable."]] },
+        { name:"Delta Sharing", icon:"i-share", desc:"Open-protocol sharing — recipients read live tables; no copies, revocable.",
+          l2:[["Shares & recipients","A named bundle of tables, readable from any tool speaking the protocol."],
+              ["No copies drift","Recipients query the live table — no exports going stale."],
+              ["Cross-boundary","Workspaces, organizations, clouds — tenants and partners alike."]] },
+        { name:"Serving endpoints & APIs", icon:"i-api", desc:"Analytics, reports and applications consume through governed endpoints.",
+          l2:[["Governed interfaces","Every consumer authenticates; every access is auditable."]] },
       ]},
     ]},
-    { name:"Consume", tag:"WHERE VALUE LANDS", lanes:[
+    { id:"consume", name:"Consume", tag:"where value lands", icon:"i-bars", lanes:[
       { title:"Analytics & BI", nodes:[
-        { name:"Power BI + Copilot", desc:"Enterprise dashboards over the semantic layer, with AI assistance on top.",
-          l2:[["Semantic models","Measures and relationships defined once — every report computes the same way."],
-              ["Import vs DirectQuery","Cache for speed or query live for freshness — chosen per workload."],
-              ["Row-level security","A viewer sees only their branch, their portfolio — security follows into the visual layer."]] },
-        { name:"AI/BI Genie", desc:"Plain-language questions answered from governed data — not a chatbot's guess.",
-          l2:[["Curated spaces","Scoped to specific governed tables with business context — it answers from those, nothing else."],
+        { name:"Power BI + Copilot", icon:"i-bars", desc:"Enterprise dashboards over the semantic layer, with AI assistance on top.",
+          l2:[["Semantic models","Measures and relationships defined once — every report computes the same."],
+              ["Import vs DirectQuery","Cache for speed or query live for freshness — per workload."],
+              ["Row-level security","A viewer sees only their branch, their portfolio."]] },
+        { name:"AI/BI Genie", icon:"i-genie", desc:"Plain-language questions answered from governed data — not a chatbot's guess.",
+          l2:[["Curated spaces","Scoped to governed tables with business context — answers from those only."],
               ["Visible SQL","The question becomes an inspectable query — trust through transparency."],
-              ["Permissions apply","No question returns data its asker couldn't query directly."]] },
+              ["Permissions apply","No question returns data its asker couldn't query."]] },
       ]},
       { title:"Advanced & operational", nodes:[
-        { name:"Data science & ML", desc:"Notebooks and models working on governed Gold and Silver data.",
-          l2:[["Same governance","Features and training data come from cataloged tables — models are auditable from data up."]] },
-        { name:"Risk & regulatory outputs", desc:"Reports whose every figure has lineage back to a source system.",
-          l2:[["Explainable numbers","A regulator's question — where did this figure come from? — has a computed answer."]] },
+        { name:"Data science & ML", icon:"i-flask", desc:"Notebooks and models working on governed Gold and Silver data.",
+          l2:[["Same governance","Features come from cataloged tables — models auditable from data up."]] },
+        { name:"Risk & regulatory outputs", icon:"i-shield", desc:"Reports whose every figure has lineage back to a source system.",
+          l2:[["Explainable numbers","'Where did this figure come from?' has a computed answer."]] },
       ]},
     ]},
   ],
   rails: [
-    { name:"🛡  Security", tone:"sec", desc:"Identity first · least privilege · secrets nowhere in code · private networking by default", nodes:[
-      { name:"Entra ID", desc:"One identity plane: SSO, MFA, service principals for every automated actor.",
-        l2:[["Machines have identities","Pipelines run as service principals — no shared accounts, no passwords in scripts."],
-            ["Groups drive access","Grants go to roles, not people — joiners and leavers become membership changes."]] },
-      { name:"Key Vault", desc:"Credentials live in the vault; code and configs hold references.",
-        l2:[["Secret scopes","Notebooks resolve secrets at runtime by name — values never appear in source."],
-            ["Rotation without redeploys","Rotate in the vault; every consumer picks it up."]] },
-      { name:"RBAC & masking", desc:"Least-privilege roles; sensitive fields masked for non-privileged eyes.",
-        l2:[["Down to rows and columns","Access rules reach inside tables — the same table answers differently per role."]] },
-      { name:"Private networking", desc:"Private endpoints, VNet peering, controlled egress — nothing rides the public internet.",
-        l2:[["Dark by default","If a path isn't explicitly provisioned, it doesn't exist."],
-            ["Provisioned as code","Subnets, endpoints, peerings are Terraform modules — reviewable and repeatable."]] },
+    { id:"security", icon:"i-shield", name:"Security", desc:"Identity first · least privilege · secrets nowhere in code · private networking by default", nodes:[
+      { name:"Entra ID", icon:"i-person", desc:"One identity plane: SSO, MFA, service principals for every automated actor.",
+        l2:[["Machines have identities","Pipelines run as service principals — no shared accounts, no passwords in scripts."],["Groups drive access","Grants go to roles, not people — leavers become membership changes."]] },
+      { name:"Key Vault", icon:"i-key", desc:"Credentials live in the vault; code and configs hold references.",
+        l2:[["Secret scopes","Notebooks resolve secrets at runtime by name — values never in source."],["Rotate freely","Rotate in the vault; every consumer picks it up — no redeploys."]] },
+      { name:"RBAC & masking", icon:"i-lock", desc:"Least-privilege roles; sensitive fields masked for non-privileged eyes.",
+        l2:[["Rows and columns","Access rules reach inside tables — the same table answers differently per role."]] },
+      { name:"Private networking", icon:"i-net", desc:"Private endpoints, VNet peering, controlled egress — nothing rides the public internet.",
+        l2:[["Dark by default","If a path isn't explicitly provisioned, it doesn't exist."],["Network as code","Subnets, endpoints, peerings are Terraform modules — reviewable, repeatable."]] },
     ]},
-    { name:"📖  Data Governance", tone:"gov", desc:"One catalog · lineage end-to-end · quality measured, not assumed · business owns meaning", nodes:[
-      { name:"Unity Catalog", desc:"One metastore over tables, files, models — grants, lineage, audit in one place.",
-        l2:[["Three-level namespace","catalog.schema.object — environments and domains separate cleanly."],
-            ["Automatic lineage","Table- and column-level lineage captured from real query execution — never drifting docs."]] },
-      { name:"Data quality", desc:"Rules attached to data, metrics tracked over time, failures visible.",
-        l2:[["Rule types","Nulls, formats, reference validation, uniqueness, reconciliation counts, anomalies."],
-            ["Quarantine, not guesswork","Failed critical rules hold data for review — a value is never silently chosen."]] },
-      { name:"Mapping & dictionary", desc:"Business decides what fields mean and require; pipelines enforce it.",
-        l2:[["The matrix workflow","Every column ever seen, plotted over time; the business fills required/name/type — that becomes the dictionary."]] },
-      { name:"Catalog & marketplace", desc:"Data findable and requestable as a product, with owners and contracts.",
-        l2:[["Data as product","Datasets have owners, documentation and quality scores — shopping, not spelunking."]] },
+    { id:"governance", icon:"i-book", name:"Data Governance", desc:"One catalog · lineage end-to-end · quality measured, not assumed · business owns meaning", nodes:[
+      { name:"Unity Catalog", icon:"i-book", desc:"One metastore over tables, files, models — grants, lineage, audit in one place.",
+        l2:[["Three-level namespace","catalog.schema.object — environments and domains separate cleanly."],["Automatic lineage","Table- and column-level lineage captured from real queries — never drifting docs."]] },
+      { name:"Data quality", icon:"i-check", desc:"Rules attached to data, metrics tracked over time, failures visible.",
+        l2:[["Rule types","Nulls, formats, reference checks, uniqueness, reconciliation, anomalies."],["Quarantine, not guesswork","Failed critical rules hold data for review — never silently chosen."]] },
+      { name:"Mapping & dictionary", icon:"i-map", desc:"Business decides what fields mean and require; pipelines enforce it.",
+        l2:[["The matrix workflow","Every column plotted over time; business fills required/name/type — that becomes the dictionary."]] },
+      { name:"Catalog & marketplace", icon:"i-bag", desc:"Data findable and requestable as a product, with owners and contracts.",
+        l2:[["Data as product","Owners, documentation, quality scores — shopping, not spelunking."]] },
     ]},
   ],
   journeys: [
-    { name:"Historic Data Loading", stats:"535 sheets · 8 systems · 41+ GB · ~2-hour run",
-      desc:"Years of manual Excel history standardised into governed gold tables by a metadata-driven pipeline — ADF, Databricks notebooks, watermark control tables. A real delivery on this platform.",
-      link:{ label:"Explore the full interactive case study →", href:"https://halkhoori2000.github.io/Historic-Data-Loading/" } },
-    { name:"Self-service sandboxes", stats:"portal request → IaC → full platform parity",
-      desc:"Isolated environments provisioned end-to-end by Terraform + CI/CD: streaming, lake, processing, catalog, SQL — the whole architecture, miniaturised. PROD-flavoured (masked, strict) and non-PROD (relaxed). Quotas, budget alerts and auto-suspension built in." },
-    { name:"How a delivery runs", stats:"discovery → design → build → test → go-live",
-      desc:"Requirements traced to sources; data models agreed before pipelines; SIT → UAT → pre-prod; then a parallel run against the old world until the numbers agree — go-live is a comparison, not a leap." },
-    { name:"A record's journey", stats:"card tap → CDC → topic → Bronze → Silver → Gold → dashboard",
-      desc:"One payment: the core system writes a row; CDC captures it; keyed to a partition (ordering holds); a sink lands it in Bronze with lineage; Silver types and conforms it; Gold aggregates it; the dashboard tile moves. Seven hops, zero manual steps." },
+    { name:"Historic Data Loading", icon:"i-file", stats:"535 sheets · 8 systems · 41+ GB · ~2-hour run",
+      desc:"Years of manual Excel history standardised into governed gold tables by a metadata-driven pipeline — ADF, Databricks notebooks, watermark control tables.",
+      link:{ label:"Explore the full case study →", href:"https://halkhoori2000.github.io/Historic-Data-Loading/" } },
+    { name:"Self-service sandboxes", icon:"i-gear", stats:"portal request → IaC → full platform parity",
+      desc:"Isolated environments provisioned end-to-end by Terraform + CI/CD: streaming, lake, processing, catalog, SQL — the whole architecture, miniaturised. Quotas, budget alerts, auto-suspension built in." },
+    { name:"How a delivery runs", icon:"i-clock", stats:"discovery → design → build → test → go-live",
+      desc:"Requirements traced to sources; data models agreed before pipelines; SIT → UAT → pre-prod; then a parallel run until the numbers agree — go-live is a comparison, not a leap." },
+    { name:"A record's journey", icon:"i-coin", stats:"card tap → CDC → topic → Bronze → Silver → Gold → dashboard",
+      desc:"One payment: the core writes a row; CDC captures it; keyed to a partition; landed in Bronze with lineage; typed in Silver; aggregated in Gold; the dashboard moves. Seven hops, zero manual steps." },
   ],
 };
 
-/* ═══════════════ build the world ═══════════════ */
-const wrapEl = document.getElementById("map-wrap");
-const svg = el("svg", {}, wrapEl);
-const world = el("g", {}, svg);
+/* ═══════ layout ═══════ */
+const COLW = 980, GUTTER = 130, PAD = 28, NODEW = (COLW - PAD*3) / 2;
+const COLTOP = 380;
+let colX = 140;
+const colFrames = [];
+const bgLayer = el("g", {}, world);       /* frames + flows behind */
+const midLayer = el("g", {}, world);      /* cards */
 
-/* layout constants */
-const COLW = 940, GUTTER = 90, PAD = 26, NODEW = (COLW - PAD*3) / 2;
-let colX = 120;
-const COLTOP = 300;
-const colBottoms = [];
+/* background dots */
+rect(bgLayer, -2000, -1500, 14000, 9000, "url(#dots)", null, 0);
 
-/* pillars + title */
-txt(world, 120, 130, "ENTERPRISE BANKING DATA PLATFORM", 64, C.colTitle, { w:"700", ls:"0.06em" });
-txt(world, 120, 185, "sources → ingest → transform → serve → consume · security and governance underneath · zoom anywhere", 26, C.muted);
+/* title */
 {
-  let px = 120;
-  const pg = lodGroup(world, 0, 2.2);
+  txt(world, 140, 120, "ENTERPRISE BANKING DATA PLATFORM", 66, TXT, { w:"800", ls:"0.04em" });
+  rect(world, 140, 148, 560, 7, "url(#grb-ingest)", null, 3.5);
+  txt(world, 140, 205, "One governed path from dozens of source systems to every decision — streaming and batch,", 25, MUT);
+  txt(world, 140, 238, "refined through Bronze → Silver → Gold, secured and cataloged end to end.", 25, MUT);
+  let px = 140;
+  const pg = lodGroup(world, 0, 2.1);
   for (const p of DATA.pillars){
-    const w = p.length * 13 + 44;
-    box(pg, px, 215, w, 44, C.surface, C.border, 22);
-    txt(pg, px + w/2, 243, p, 20, C.muted, { anchor:"middle" });
-    px += w + 14;
+    const w = p.length * 12.5 + 56;
+    rect(pg, px, 268, w, 46, BASE, BORDER, 23);
+    el("circle", { cx: px + 24, cy: 291, r: 5, fill: "#58a6ff" }, pg);
+    txt(pg, px + 40, 298, p, 19, MUT);
+    px += w + 16;
   }
 }
 
-/* measure + draw a node */
-function drawNode(parent, x, y, node){
+/* node card */
+function drawNode(parent, x, y, node, zone){
+  const Z = ZONES[node.journey ? "journey" : zone];
   const titleSize = 22, descSize = 14.5;
-  const descLines = wrap(node.desc, descSize, NODEW - 36);
-  let h = 18 + titleSize*1.3 + 8 + descLines.length * descSize*1.35 + 14;
+  const headH = 46;
+  const descLines = linesOf(node.desc, descSize, NODEW - 40);
+  let h = headH + 14 + descLines * descSize * 1.34 + 16;
   const l2 = node.l2 || [];
-  const miniW = (NODEW - 36 - 12) / 2, miniTitle = 7.2, miniText = 5.6;
-  const miniHs = l2.map(c => 10 + miniTitle*1.3 + 4 + wrap(c[1], miniText, miniW - 16).length * miniText*1.35 + 8);
+  const miniW = (NODEW - 40 - 12) / 2, miniT = 7.4, miniB = 5.8;
+  const miniHs = l2.map(c => 10 + miniT*1.3 + 4 + linesOf(c[1], miniB, miniW - 16) * miniB * 1.35 + 8);
   let l2h = 0;
   if (l2.length){
     for (let i = 0; i < miniHs.length; i += 2) l2h += Math.max(miniHs[i], miniHs[i+1] || 0) + 8;
-    l2h += 6;
+    l2h += 8;
   }
-  const special = node.kafka ? 560 : node.delta ? 380 : node.spark ? 330 : 0;
+  const special = node.kafka ? 585 : node.delta ? 400 : node.spark ? 345 : 0;
   const totalH = h + l2h + special;
 
-  const bg = box(parent, x, y, NODEW, totalH, C.surface, node.tone==="bronze" ? "#b0762a" : node.tone==="silver" ? "#7d8590" : node.tone==="gold" ? "#d4a72c" : node.journey ? "#238636" : C.border, 10);
-  bg.classList.add("clickable");
-  bg.addEventListener("click", () => flyTo(x - 40, y - 40, NODEW + 80));
-  txt(parent, x + 18, y + 18 + titleSize, node.name, titleSize, C.colTitle, { w:"600" });
-  const dt = txt(parent, x + 18, y + 18 + titleSize*1.3 + 8 + descSize, node.desc, descSize, C.muted, { maxw: NODEW - 36 });
+  const card = rect(parent, x, y, NODEW, totalH, "url(#gr-" + (node.journey ? "journey" : zone) + ")", Z.border, 12, { filter:"url(#sh2)" });
+  card.classList.add("card","clickable");
+  card.style.setProperty("--acc", Z.acc);
+  card.addEventListener("click", () => flyTo(x - 50, y - 50, NODEW + 100));
+  /* header */
+  el("path", { d:`M${x} ${y+headH} h${NODEW}`, stroke: blend(Z.acc, BASE, 0.25), "stroke-width":1 }, parent);
+  if (node.tone){
+    /* medallion cylinder */
+    const cy = y + headH/2;
+    el("ellipse", { cx:x+26, cy:cy-7, rx:13, ry:4.5, fill:"url(#cyl-"+node.tone+")" }, parent);
+    el("path", { d:`M${x+13} ${cy-7} v12 a13 4.5 0 0 0 26 0 v-12`, fill:"url(#cyl-"+node.tone+")" }, parent);
+  } else {
+    el("circle", { cx:x+26, cy:y+headH/2, r:14, fill:blend(Z.acc, BASE, 0.16), stroke:blend(Z.acc, BASE, 0.5), "stroke-width":1 }, parent);
+    icon(parent, x+17, y+headH/2-9, 18, node.icon || "i-gear", Z.acc);
+  }
+  txt(parent, x + 48, y + headH/2 + 7, node.name, titleSize, TXT, { w:"650" });
+  txt(parent, x + 20, y + headH + 14 + descSize, node.desc, descSize, MUT, { maxw: NODEW - 40 });
 
-  /* L2 minicards */
   if (l2.length){
     const g2 = lodGroup(parent, 2.1);
     let my = y + h, col = 0, rowH = 0;
     l2.forEach((c, i) => {
-      const mx = x + 18 + col * (miniW + 12);
+      const mx = x + 20 + col * (miniW + 12);
       const mh = miniHs[i];
-      box(g2, mx, my, miniW, mh, C.surface2, "#21262d", 6);
-      txt(g2, mx + 8, my + 8 + miniTitle, c[0], miniTitle, C.lb, { w:"600" });
-      txt(g2, mx + 8, my + 8 + miniTitle*1.3 + 4 + miniText, c[1], miniText, C.muted, { maxw: miniW - 16 });
+      rect(g2, mx, my, miniW, mh, blend(Z.acc, BG, 0.05), blend(Z.acc, BORDER, 0.2), 7);
+      txt(g2, mx + 8, my + 8 + miniT, c[0], miniT, Z.acc, { w:"650" });
+      txt(g2, mx + 8, my + 8 + miniT*1.3 + 4 + miniB, c[1], miniB, MUT, { maxw: miniW - 16 });
       rowH = Math.max(rowH, mh);
       if (col === 1 || i === l2.length - 1){ my += rowH + 8; rowH = 0; }
       col = 1 - col;
-      if (col === 0 && i < l2.length - 1) {} // next row
     });
-    /* depth affordance at low zoom */
-    const aff = lodGroup(parent, 0.7, 2.1);
-    txt(aff, x + NODEW - 18, y + totalH - 12, "⤵ zoom for internals", 10, C.lb, { anchor:"end" });
+    const aff = lodGroup(parent, 0.55, 2.1);
+    txt(aff, x + NODEW - 20, y + totalH - 14, "⌕ zoom for internals", 10.5, Z.acc, { anchor:"end", w:"600" });
   }
-  if (node.kafka) buildKafkaDeep(parent, x + 18, y + h + l2h, NODEW - 36);
-  if (node.delta) buildDeltaDeep(parent, x + 18, y + h + l2h, NODEW - 36);
-  if (node.spark) buildSparkDeep(parent, x + 18, y + h + l2h, NODEW - 36);
+  if (node.kafka) deepKafka(parent, x + 20, y + h + l2h, NODEW - 40, Z);
+  if (node.delta) deepDelta(parent, x + 20, y + h + l2h, NODEW - 40, Z);
+  if (node.spark) deepSpark(parent, x + 20, y + h + l2h, NODEW - 40, Z);
   return totalH;
 }
 
-/* deep panels: L3/L4 authored small — readable only when zoomed far in */
-function panel(gp, x, y, w, h, title, color){
-  box(gp, x, y, w, h, C.bg, color || C.border, 6);
-  txt(gp, x + 10, y + 14, title, 8.5, color || C.lb, { w:"700", ls:"0.08em" });
+function panel(gp, x, y, w, h, title, acc, ic){
+  rect(gp, x, y, w, h, blend(acc, BG, 0.05), blend(acc, BORDER, 0.35), 8);
+  rect(gp, x, y, w, 20, blend(acc, BASE, 0.22), "none", 8);
+  rect(gp, x, y+12, w, 8, blend(acc, BASE, 0.22), "none", 0);
+  if (ic) icon(gp, x + 7, y + 3.5, 13, ic, acc);
+  txt(gp, x + (ic ? 26 : 10), y + 14.5, title, 8.5, acc, { w:"750", ls:"0.1em" });
 }
-function miniCards(gp, x, y, w, cards, tSize, bSize){
+function miniCards(gp, x, y, w, cards, tS, bS, acc){
   const cw = (w - (cards.length - 1) * 8) / cards.length;
   let maxH = 0;
   cards.forEach((c, i) => {
     const cx = x + i * (cw + 8);
-    const lines = wrap(c[1], bSize, cw - 12);
-    const ch = 8 + tSize*1.3 + 3 + lines.length * bSize*1.35 + 6;
-    box(gp, cx, y, cw, ch, C.surface2, "#21262d", 4);
-    txt(gp, cx + 6, y + 6 + tSize, c[0], tSize, C.gold, { w:"600" });
-    txt(gp, cx + 6, y + 6 + tSize*1.3 + 3 + bSize, c[1], bSize, C.muted, { maxw: cw - 12 });
+    const ch = 8 + tS*1.3 + 3 + linesOf(c[1], bS, cw - 12) * bS * 1.35 + 6;
+    rect(gp, cx, y, cw, ch, blend(acc, BASE, 0.06), "#232c3d", 5);
+    txt(gp, cx + 6, y + 6 + tS, c[0], tS, GOLD, { w:"650" });
+    txt(gp, cx + 6, y + 6 + tS*1.3 + 3 + bS, c[1], bS, MUT, { maxw: cw - 12 });
     maxH = Math.max(maxH, ch);
   });
   return maxH;
 }
+function playBtn(gp, x, y, label){
+  const b = el("g", { class:"clickable" }, gp);
+  rect(b, x, y, 78, 20, "#1f6feb", "#388bfd", 6);
+  const t = txt(b, x + 39, y + 14, label, 8.5, "#fff", { anchor:"middle", w:"650" });
+  return { g: b, t };
+}
 
-/* —— Kafka deep: L3 cluster + L4 partition log with live demo —— */
-let kafkaDemo = null;
-function buildKafkaDeep(parent, x, y, w){
+/* —— deep: Kafka —— */
+function deepKafka(parent, x, y, w, Z){
   const g3 = lodGroup(parent, 4.2);
-  panel(g3, x, y, w, 250, "L3 · INSIDE A CLUSTER", "#1f6feb");
-  let yy = y + 24;
+  panel(g3, x, y, w, 262, "L3 · INSIDE A CLUSTER", Z.acc, "i-stream");
+  let yy = y + 30;
   yy += miniCards(g3, x + 10, yy, w - 20, [
     ["Brokers","Each broker hosts many partitions; spread a topic across brokers and no machine limits the stream."],
     ["Leaders & followers","One leader takes reads/writes; followers replicate continuously on other brokers."],
-    ["In-sync replicas","A write is committed once the ISR has it — lose the leader, an ISR member takes over, zero loss."]], 6.5, 5) + 8;
+    ["In-sync replicas","Committed = the ISR has it. Lose the leader, an ISR member takes over — zero loss."]], 6.6, 5.1, Z.acc) + 8;
   yy += miniCards(g3, x + 10, yy, w - 20, [
-    ["Consumer groups","Members split the partitions; each partition is read by exactly one member — scale by adding consumers."],
-    ["Connect workers","Connectors run as distributed tasks — source connectors in, sink connectors out."],
-    ["UAT → PROD","Connector configs, topic standards and schemas promote through environments like code."]], 6.5, 5) + 10;
+    ["Consumer groups","Members split the partitions; each partition read by exactly one member — add consumers to scale."],
+    ["Connect workers","Connectors run as distributed tasks — sources in, sinks out."],
+    ["UAT → PROD","Connector configs, topic standards, schemas promote like code."]], 6.6, 5.1, Z.acc) + 12;
 
   const g4 = lodGroup(parent, 7.5);
-  const py = y + 260;
-  panel(g4, x, py, w, 290, "L4 · INSIDE A PARTITION — THE COMMIT LOG", "#3fb950");
-  txt(g4, x + 10, py + 30, "The bottom of Kafka: an append-only log. Messages are numbered by offset and never modified — replication, consumers and exactly-once are all built on that one idea.", 5.5, C.muted, { maxw: w - 20 });
-  /* demo area */
+  const py = y + 272;
+  panel(g4, x, py, w, 300, "L4 · INSIDE A PARTITION — THE COMMIT LOG", "#56d364", "i-stream");
+  txt(g4, x + 10, py + 34, "The bottom of Kafka: an append-only log. Messages are numbered by offset and never modified — replication, consumers and exactly-once are built on that one idea.", 5.6, MUT, { maxw: w - 20 });
   const dg = el("g", {}, g4);
-  const rows = [["leader", py + 68], ["follower 1", py + 118], ["follower 2", py + 168]];
+  const rows = [["leader", py + 74], ["follower 1", py + 124], ["follower 2", py + 174]];
   rows.forEach(r => {
-    txt(dg, x + 12, r[1] + 15, r[0], 6, C.dim);
-    box(dg, x + 62, r[1], w - 160, 24, C.surface2, "#21262d", 4);
+    txt(dg, x + 12, r[1] + 15, r[0], 6, DIM, { w:"600" });
+    rect(dg, x + 64, r[1], w - 162, 24, "#0d1420", "#232c3d", 5);
   });
-  const consText = txt(dg, x + 62, py + 212, "consumer — committed offset: · lag:", 6, C.green);
-  const keyText = txt(dg, x + 62, py + 226, "producer key → hash → partition (same key, same partition, same order)", 5.5, C.muted);
-  /* play button */
-  const btn = el("g", { class:"clickable" }, g4);
-  box(btn, x + w - 88, py + 60, 76, 20, "#1f6feb", "#1f6feb", 5);
-  const btnT = txt(btn, x + w - 50, py + 74, "▶ run", 8, "#fff", { anchor:"middle", w:"600" });
-  const strips = { leader: [], f1: [], f2: [] };
-  kafkaDemo = { running:false, timers:[], off:0, committed:-1 };
-  btn.addEventListener("click", () => {
-    if (kafkaDemo.running){ kafkaDemo.timers.forEach(clearInterval); kafkaDemo.timers.forEach(clearTimeout); kafkaDemo.timers = []; kafkaDemo.running = false; btnT.textContent = "▶ run"; return; }
-    kafkaDemo.running = true; btnT.textContent = "⏸ pause";
+  const consText = txt(dg, x + 64, py + 220, "consumer — committed offset: · lag:", 6.2, "#56d364");
+  const keyText = txt(dg, x + 64, py + 234, "producer key → hash → partition (same key, same partition, same order)", 5.4, MUT);
+  const btn = playBtn(g4, x + w - 92, py + 64, "▶ run");
+  const strips = { l: [], f1: [], f2: [] };
+  const st = { running:false, timers:[], off:0 };
+  btn.g.addEventListener("click", () => {
+    if (st.running){ st.timers.forEach(t => { clearInterval(t); clearTimeout(t); }); st.timers = []; st.running = false; btn.t.textContent = "▶ run"; return; }
+    st.running = true; btn.t.textContent = "⏸ pause";
     const colors = ["#1f6feb","#8957e5","#bf8700"], keys = ["acct-11","acct-42","acct-77"];
-    const slotW = 26, maxSlots = Math.floor((w - 172) / slotW);
+    const slotW = 26, maxSlots = Math.floor((w - 174) / slotW);
     function push(rowY, arr, off, ci){
-      const gx = x + 66 + arr.length * slotW;
       const m = el("g", {}, dg);
-      box(m, gx, rowY + 3, slotW - 3, 18, colors[ci], colors[ci], 3);
-      txt(m, gx + (slotW-3)/2, rowY + 15, String(off), 6.5, "#fff", { anchor:"middle", w:"700" });
+      const gx = x + 68 + arr.length * slotW;
+      const r = rect(m, gx, rowY + 3, slotW - 3, 18, colors[ci], "none", 3);
+      const tx = txt(m, gx + (slotW-3)/2, rowY + 15.5, String(off), 6.6, "#fff", { anchor:"middle", w:"700" });
       arr.push(m);
-      if (arr.length > maxSlots){ const old = arr.shift(); old.remove(); arr.forEach((mm,i) => mm.setAttribute("transform", "")); /* simple: shift all left */
-        arr.forEach((mm, i) => mm.setAttribute("transform", `translate(${(i - arr.indexOf(mm)) * 0},0)`));
-        /* reposition by rebuilding x attrs */
-        arr.forEach((mm, i) => { const rect = mm.querySelector("rect"), t = mm.querySelector("text");
-          const nx = x + 66 + i * slotW; rect.setAttribute("x", nx); t.setAttribute("x", nx + (slotW-3)/2); });
+      if (arr.length > maxSlots){
+        arr.shift().remove();
+        arr.forEach((mm, i) => {
+          const rr = mm.querySelector("rect"), tt = mm.querySelector("text");
+          const nx = x + 68 + i * slotW;
+          rr.setAttribute("x", nx); tt.setAttribute("x", nx + (slotW-3)/2);
+        });
       }
     }
-    const t = setInterval(() => {
+    st.timers.push(setInterval(() => {
       const ci = Math.floor(Math.random() * 3);
-      const myOff = kafkaDemo.off++;
-      keyText.textContent = `producer key ${keys[ci]} → hash → this partition · next offset: ${kafkaDemo.off}`;
-      push(rows[0][1], strips.leader, myOff, ci);
-      kafkaDemo.timers.push(setTimeout(() => push(rows[1][1], strips.f1, myOff, ci), 300));
-      kafkaDemo.timers.push(setTimeout(() => push(rows[2][1], strips.f2, myOff, ci), 600));
-      kafkaDemo.timers.push(setTimeout(() => { kafkaDemo.committed = myOff;
-        consText.textContent = `consumer — committed offset: ${kafkaDemo.committed} · lag: ${Math.max(0, kafkaDemo.off - 1 - kafkaDemo.committed)}`; }, 1000));
-    }, 900);
-    kafkaDemo.timers.push(t);
+      const myOff = st.off++;
+      keyText.textContent = `producer key ${keys[ci]} → hash → this partition · next offset: ${st.off}`;
+      push(rows[0][1], strips.l, myOff, ci);
+      st.timers.push(setTimeout(() => push(rows[1][1], strips.f1, myOff, ci), 300));
+      st.timers.push(setTimeout(() => push(rows[2][1], strips.f2, myOff, ci), 600));
+      st.timers.push(setTimeout(() => { consText.textContent = `consumer — committed offset: ${myOff} · lag: ${Math.max(0, st.off - 1 - myOff)}`; }, 1000));
+    }, 900));
   });
-  txt(g4, x + 10, py + 250, "Segments & retention: on disk the log is chunked; old segments expire by time/size — or compact, keeping the latest message per key.", 5, C.dim, { maxw: w - 20 });
-  txt(g4, x + 10, py + 268, "Replication is just consumption: followers fetch from the leader's log like any reader — the same primitive everywhere.", 5, C.dim, { maxw: w - 20 });
+  txt(g4, x + 10, py + 258, "Segments & retention: the log is chunked on disk; old segments expire — or compact, keeping the latest message per key.", 5, DIM, { maxw: w - 20 });
+  txt(g4, x + 10, py + 276, "Replication is just consumption: followers fetch from the leader's log like any reader — one primitive everywhere.", 5, DIM, { maxw: w - 20 });
 }
 
-/* —— Delta deep: transaction log + time travel —— */
-function buildDeltaDeep(parent, x, y, w){
+/* —— deep: Delta —— */
+function deepDelta(parent, x, y, w, Z){
   const g = lodGroup(parent, 4.2);
-  panel(g, x, y, w, 360, "L3 · INSIDE THE TRANSACTION LOG (_delta_log/)", "#d4a72c");
-  txt(g, x + 10, y + 30, "A Delta table = parquet data files + numbered JSON commits describing which files are the table at each version. Replay the log, get the state. That folder is the whole magic.", 5.5, C.muted, { maxw: w - 20 });
-  let yy = y + 52;
+  panel(g, x, y, w, 380, "L3 · INSIDE THE TRANSACTION LOG  (_delta_log/)", GOLD, "i-delta");
+  txt(g, x + 10, y + 34, "A Delta table = parquet files + numbered JSON commits describing which files are the table at each version. Replay the log, get the state — that folder is the whole magic.", 5.6, MUT, { maxw: w - 20 });
+  let yy = y + 58;
   yy += miniCards(g, x + 10, yy, w - 20, [
-    ["Commits as actions","Each commit lists actions — add this file, remove that one. Current state = replay all commits."],
-    ["Checkpoints","Every N commits the state snapshots to parquet; readers start there instead of replaying everything."],
-    ["Optimistic concurrency","Writers don't lock: prepare, then claim the next version number; conflicts detected, loser retries."]], 6.5, 5) + 10;
-  /* demo */
-  const filesBoxY = yy + 6;
-  txt(g, x + 10, filesBoxY, "data files", 6, C.dim);
-  txt(g, x + w/2 + 6, filesBoxY, "_delta_log/", 6, C.dim);
-  const filesArea = box(g, x + 10, filesBoxY + 6, w/2 - 22, 120, C.surface2, "#21262d", 4);
-  const logArea = box(g, x + w/2 + 6, filesBoxY + 6, w/2 - 22, 120, C.surface2, "#21262d", 4);
-  const btn = el("g", { class:"clickable" }, g);
-  box(btn, x + w - 88, y + 6, 76, 18, "#1f6feb", "#1f6feb", 5);
-  const btnT = txt(btn, x + w - 50, y + 19, "▶ run", 8, "#fff", { anchor:"middle", w:"600" });
-  const verLabel = txt(g, x + 10, filesBoxY + 146, "version —  (◀ ▶ to time-travel after running)", 6.5, C.gold);
-  const navL = el("g", { class:"clickable" }, g); box(navL, x + w - 88, filesBoxY + 134, 34, 16, C.surface2, C.border, 4); txt(navL, x + w - 71, filesBoxY + 146, "◀", 8, C.lb, { anchor:"middle" });
-  const navR = el("g", { class:"clickable" }, g); box(navR, x + w - 48, filesBoxY + 134, 34, 16, C.surface2, C.border, 4); txt(navR, x + w - 31, filesBoxY + 146, "▶", 8, C.lb, { anchor:"middle" });
-  const state = [], allFiles = [];
-  let fileNo = 0, shownVer = -1, fileEls = {}, logCount = 0;
+    ["Commits as actions","Add this file, remove that one — current state = replay all commits."],
+    ["Checkpoints","Every N commits the state snapshots to parquet; readers start there."],
+    ["Optimistic concurrency","Writers prepare, then claim the next version; conflicts detected, loser retries."]], 6.6, 5.1, GOLD) + 12;
+  const fy = yy + 8;
+  txt(g, x + 10, fy, "data files", 6, DIM, { w:"600" });
+  txt(g, x + w/2 + 6, fy, "_delta_log/", 6, DIM, { w:"600" });
+  rect(g, x + 10, fy + 6, w/2 - 22, 124, "#0d1420", "#232c3d", 5);
+  rect(g, x + w/2 + 6, fy + 6, w/2 - 22, 124, "#0d1420", "#232c3d", 5);
+  const btn = playBtn(g, x + w - 92, y + 26, "▶ run");
+  const verLabel = txt(g, x + 10, fy + 150, "version — (◀ ▶ to time-travel after running)", 6.6, GOLD);
+  const navL = el("g", { class:"clickable" }, g); rect(navL, x + w - 92, fy + 138, 36, 17, BASE, BORDER, 5); txt(navL, x + w - 74, fy + 150.5, "◀", 8.5, "#58a6ff", { anchor:"middle" });
+  const navR = el("g", { class:"clickable" }, g); rect(navR, x + w - 50, fy + 138, 36, 17, BASE, BORDER, 5); txt(navR, x + w - 32, fy + 150.5, "▶", 8.5, "#58a6ff", { anchor:"middle" });
+  const state = [], allFiles = [], fileEls = {};
+  let fileNo = 0, shownVer = -1, logCount = 0, step = 0, running = false, timer = null;
   const acts = [
     { a:"add", n:2, note:"batch insert" }, { a:"add", n:1, note:"stream append" },
     { a:"opt", note:"OPTIMIZE — compact" }, { a:"add", n:1, note:"late data" },
     { a:"chk", note:"checkpoint" }, { a:"add", n:2, note:"stream append" } ];
-  let step = 0, running = false, timer = null;
   function logLine(name, detail, color){
-    const ly = filesBoxY + 16 + logCount * 13;
-    if (logCount < 8){
-      txt(g, x + w/2 + 12, ly, name + "  " + detail, 5.2, color);
-      logCount++;
-    }
+    if (logCount >= 8) return;
+    txt(g, x + w/2 + 12, fy + 22 + logCount * 14, name + "  " + detail, 5.2, color);
+    logCount++;
   }
-  function renderFiles(v){
-    shownVer = v;
-    const visible = new Set(state[v]);
-    allFiles.forEach(f => { const e = fileEls[f]; if (e) e.setAttribute("opacity", visible.has(f) ? 1 : 0.22); });
-    verLabel.textContent = `version ${v}` + (v < state.length - 1 ? "  (time travel — old files still exist until VACUUM)" : "  (current)");
-  }
-  function addFileChip(name){
+  function addChip(name){
     const idx = allFiles.length;
-    const fx = x + 16 + (idx % 3) * ((w/2 - 34) / 3), fy = filesBoxY + 14 + Math.floor(idx / 3) * 20;
+    const cw3 = (w/2 - 40) / 3;
+    const fx = x + 16 + (idx % 3) * (cw3 + 4), fyy = fy + 14 + Math.floor(idx / 3) * 21;
     const gEl = el("g", {}, g);
-    box(gEl, fx, fy, (w/2 - 40) / 3, 15, C.surface, "#7d8590", 3);
-    txt(gEl, fx + 4, fy + 10.5, name, 4.8, C.muted);
+    rect(gEl, fx, fyy, cw3, 16, BASE, "#7d8590", 3);
+    icon(gEl, fx + 3, fyy + 2.5, 10, "i-file", "#93a1b3");
+    txt(gEl, fx + 15, fyy + 11.5, name, 4.9, MUT);
     fileEls[name] = gEl; allFiles.push(name);
   }
-  btn.addEventListener("click", () => {
-    if (running){ clearInterval(timer); running = false; btnT.textContent = "▶ run"; return; }
+  function renderVer(v){
+    shownVer = v;
+    const vis = new Set(state[v]);
+    allFiles.forEach(f => fileEls[f].setAttribute("opacity", vis.has(f) ? 1 : 0.22));
+    verLabel.textContent = `version ${v}` + (v < state.length - 1 ? " (time travel — old files exist until VACUUM)" : " (current)");
+  }
+  btn.g.addEventListener("click", () => {
+    if (running){ clearInterval(timer); running = false; btn.t.textContent = "▶ run"; return; }
     if (step >= acts.length) return;
-    running = true; btnT.textContent = "⏸";
+    running = true; btn.t.textContent = "⏸";
     timer = setInterval(() => {
-      if (step >= acts.length){ clearInterval(timer); running = false; btnT.textContent = "done"; return; }
+      if (step >= acts.length){ clearInterval(timer); running = false; btn.t.textContent = "done"; return; }
       const a = acts[step++];
       const prev = state.length ? state[state.length-1].slice() : [];
       if (a.a === "add"){
         const added = [];
-        for (let i = 0; i < a.n; i++){ const nm = `part-${String(fileNo++).padStart(3,"0")}`; added.push(nm); addFileChip(nm); }
+        for (let i = 0; i < a.n; i++){ const nm = "part-" + String(fileNo++).padStart(3,"0"); added.push(nm); addChip(nm); }
         state.push(prev.concat(added));
-        logLine(`0000${state.length-1}.json`, `add ${added.join(", ")} · ${a.note}`, C.green);
+        logLine("0000" + (state.length-1) + ".json", "add " + added.join(", ") + " · " + a.note, "#56d364");
       } else if (a.a === "opt"){
-        const nm = `part-${String(fileNo++).padStart(3,"0")}`; addFileChip(nm);
+        const nm = "part-" + String(fileNo++).padStart(3,"0"); addChip(nm);
         state.push([nm]);
-        logLine(`0000${state.length-1}.json`, `remove ${prev.length} files, add ${nm} · ${a.note}`, C.red);
+        logLine("0000" + (state.length-1) + ".json", "remove " + prev.length + " files, add " + nm + " · " + a.note, "#f47067");
       } else {
         state.push(prev);
-        logLine(`checkpoint.parquet`, `state snapshot at commit ${state.length-1}`, C.gold);
+        logLine("checkpoint.parquet", "state snapshot at commit " + (state.length-1), GOLD);
       }
-      renderFiles(state.length - 1);
+      renderVer(state.length - 1);
     }, 1000);
   });
-  navL.addEventListener("click", () => { if (shownVer > 0) renderFiles(shownVer - 1); });
-  navR.addEventListener("click", () => { if (shownVer < state.length - 1) renderFiles(shownVer + 1); });
+  navL.addEventListener("click", () => { if (shownVer > 0) renderVer(shownVer - 1); });
+  navR.addEventListener("click", () => { if (shownVer < state.length - 1) renderVer(shownVer + 1); });
 }
 
-/* —— Spark deep: DAG demo —— */
-function buildSparkDeep(parent, x, y, w){
+/* —— deep: Spark —— */
+function deepSpark(parent, x, y, w, Z){
   const g = lodGroup(parent, 4.2);
-  panel(g, x, y, w, 310, "L3 · A JOB EXECUTING — STAGES, SHUFFLES, TASKS", "#f0883e");
-  txt(g, x + 10, y + 30, "The driver splits the plan into stages at shuffle boundaries — where data must regroup across the cluster. Each stage runs as parallel tasks, one per partition.", 5.5, C.muted, { maxw: w - 20 });
-  const stW = (w - 20 - 40) / 3;
+  panel(g, x, y, w, 325, "L3 · A JOB EXECUTING — STAGES, SHUFFLES, TASKS", Z.acc, "i-spark");
+  txt(g, x + 10, y + 34, "The driver splits the plan into stages at shuffle boundaries — where data must regroup across the cluster. Each stage runs as parallel tasks, one per partition.", 5.6, MUT, { maxw: w - 20 });
+  const stW = (w - 20 - 44) / 3;
   const stages = [
     { label:"Stage 1 · read + filter", sub:"narrow — no movement", n:8 },
     { label:"Stage 2 · join", sub:"after SHUFFLE ⇄", n:6 },
@@ -560,191 +655,213 @@ function buildSparkDeep(parent, x, y, w){
   ];
   const boxes = [];
   stages.forEach((s, i) => {
-    const sx = x + 10 + i * (stW + 20);
-    const bg = box(g, sx, y + 46, stW, 120, C.surface2, C.border, 6);
-    txt(g, sx + 8, y + 62, s.label, 6.5, C.colTitle, { w:"600" });
-    txt(g, sx + 8, y + 74, s.sub, 5, C.dim);
+    const sx = x + 10 + i * (stW + 22);
+    const bg = rect(g, sx, y + 52, stW, 122, "#0d1420", "#232c3d", 7);
+    txt(g, sx + 8, y + 68, s.label, 6.6, TXT, { w:"650" });
+    txt(g, sx + 8, y + 80, s.sub, 5, DIM);
     const tasks = [];
-    for (let t = 0; t < s.n; t++){
-      const tx = sx + 8 + (t % 4) * 16, ty = y + 84 + Math.floor(t / 4) * 16;
-      tasks.push(box(g, tx, ty, 12, 12, "#21262d", "#21262d", 2));
-    }
+    for (let t = 0; t < s.n; t++)
+      tasks.push(rect(g, sx + 8 + (t % 4) * 17, y + 90 + Math.floor(t / 4) * 17, 13, 13, "#1c2433", "none", 3));
     boxes.push({ bg, tasks });
-    if (i < 2) txt(g, sx + stW + 4, y + 108, "⇄", 10, C.red, { w:"700" });
+    if (i < 2) txt(g, sx + stW + 6, y + 116, "⇄", 11, "#f47067", { w:"700" });
   });
-  const note = txt(g, x + 10, y + 186, "Press ▶ to run the job.", 5.5, C.muted, { maxw: w - 20 });
-  txt(g, x + 10, y + 216, "Photon: the same plan executes on a vectorized C++ engine working on columnar batches — several times faster on SQL-shaped work, no code change.", 5, C.dim, { maxw: w - 20 });
-  txt(g, x + 10, y + 244, "Fewer shuffles = faster jobs: good pipelines filter early, broadcast small tables, and partition on join keys.", 5, C.dim, { maxw: w - 20 });
-  const btn = el("g", { class:"clickable" }, g);
-  box(btn, x + w - 88, y + 6, 76, 18, "#1f6feb", "#1f6feb", 5);
-  const btnT = txt(btn, x + w - 50, y + 19, "▶ run", 8, "#fff", { anchor:"middle", w:"600" });
-  let running = false; const timers = [];
-  btn.addEventListener("click", () => {
+  const note = txt(g, x + 10, y + 196, "Press ▶ to run the job.", 5.6, MUT, { maxw: w - 20 });
+  txt(g, x + 10, y + 228, "Photon: the same plan executes on a vectorized C++ engine over columnar batches — several times faster on SQL-shaped work, zero code change.", 5.1, DIM, { maxw: w - 20 });
+  txt(g, x + 10, y + 256, "Fewer shuffles = faster jobs: filter early, broadcast small tables, partition on join keys.", 5.1, DIM, { maxw: w - 20 });
+  const btn = playBtn(g, x + w - 92, y + 26, "▶ run");
+  let running = false;
+  btn.g.addEventListener("click", () => {
     if (running) return;
     running = true;
-    boxes.forEach(b => { b.bg.setAttribute("stroke", C.border); b.tasks.forEach(t => t.setAttribute("fill", "#21262d")); });
+    boxes.forEach(b => { b.bg.setAttribute("stroke", "#232c3d"); b.tasks.forEach(t => t.setAttribute("fill", "#1c2433")); });
     let si = 0;
     (function runStage(){
-      if (si >= boxes.length){ running = false; btnT.textContent = "▶ again"; note.textContent = "Done — 3 stages, 2 shuffles, 18 tasks."; return; }
-      const st = boxes[si];
-      st.bg.setAttribute("stroke", "#1f6feb");
+      if (si >= boxes.length){ running = false; btn.t.textContent = "▶ again"; note.textContent = "Done — 3 stages, 2 shuffles, 18 tasks."; return; }
+      const stg = boxes[si];
+      stg.bg.setAttribute("stroke", "#1f6feb");
       note.textContent = si === 0 ? "Stage 1: every task reads & filters its own partition — fully parallel." :
         si === 1 ? "Shuffle: rows regroup by join key across the cluster — then stage 2 joins." :
         "Second shuffle groups by aggregation key; stage 3 aggregates and writes.";
       let done = 0;
-      st.tasks.forEach(t => {
+      stg.tasks.forEach(t => {
         const start = 150 + Math.random() * 800;
-        timers.push(setTimeout(() => t.setAttribute("fill", "#f0883e"), start));
-        timers.push(setTimeout(() => { t.setAttribute("fill", "#3fb950"); done++;
-          if (done === st.tasks.length){ st.bg.setAttribute("stroke", "#3fb950"); si++; timers.push(setTimeout(runStage, 300)); } }, start + 450 + Math.random() * 550));
+        setTimeout(() => t.setAttribute("fill", "#f0883e"), start);
+        setTimeout(() => { t.setAttribute("fill", "#56d364"); done++;
+          if (done === stg.tasks.length){ stg.bg.setAttribute("stroke", "#56d364"); si++; setTimeout(runStage, 300); } }, start + 450 + Math.random() * 550);
       });
     })();
   });
 }
 
-/* draw columns */
+/* draw the five columns */
+const colBottoms = [];
 DATA.columns.forEach((col, ci) => {
   const gx = colX;
-  const header = el("g", {}, world);
-  txt(header, gx, COLTOP - 46, col.tag, 18, C.dim, { ls:"0.14em" });
-  txt(header, gx, COLTOP - 10, col.name, 44, C.colTitle, { w:"700" });
-  let y = COLTOP + 20;
-  const laneG = lodGroup(world, 0.34);
+  const Z = ZONES[col.id];
+  /* content */
+  let y = COLTOP + 120;
+  const laneG = lodGroup(midLayer, 0.34);
   for (const lane of col.lanes){
-    txt(laneG, gx, y + 14, lane.title.toUpperCase(), 15, C.orange, { ls:"0.1em" });
-    y += 34;
+    el("circle", { cx: gx + 5, cy: y + 9, r: 4, fill: Z.acc }, laneG);
+    txt(laneG, gx + 18, y + 14, lane.title.toUpperCase(), 14.5, blend(Z.acc, "#ffffff", 0.75), { ls:"0.12em", w:"700" });
+    y += 36;
     let colI = 0, rowMax = 0, rowY = y;
     lane.nodes.forEach((node, ni) => {
       const nx = gx + colI * (NODEW + PAD);
-      const h = drawNode(laneG, nx, rowY, node);
+      const h = drawNode(laneG, nx, rowY, node, col.id);
       rowMax = Math.max(rowMax, h);
       colI++;
       if (colI === 2 || ni === lane.nodes.length - 1){ rowY += rowMax + PAD; colI = 0; rowMax = 0; }
     });
-    y = rowY + 10;
+    y = rowY + 14;
   }
   colBottoms.push(y);
-  /* low-zoom chips */
-  const chipG = lodGroup(world, 0, 0.34);
-  const chips = col.lanes.flatMap(l => l.nodes.map(n => n.name)).slice(0, 8);
-  let cy = COLTOP + 40;
-  for (const ch of chips){
-    box(chipG, gx, cy, Math.min(NODEW * 2, ch.length * 15 + 40), 52, C.surface, C.border, 10);
-    txt(chipG, gx + 20, cy + 34, ch, 24, C.muted);
-    cy += 68;
-  }
-  /* arrow to next column */
-  if (ci < DATA.columns.length - 1){
-    txt(world, gx + COLW - 18, COLTOP + 320, "→", 60, C.orange, { w:"700" });
+  /* low-zoom chip list */
+  const chipG = lodGroup(midLayer, 0, 0.34);
+  const chips = col.lanes.flatMap(l => l.nodes).slice(0, 7);
+  let cy = COLTOP + 130;
+  for (const n of chips){
+    const w = Math.min(NODEW * 2 + PAD, n.name.length * 16 + 92);
+    rect(chipG, gx, cy, w, 58, blend(Z.acc, BASE, 0.07), blend(Z.acc, BORDER, 0.25), 12);
+    el("circle", { cx: gx + 30, cy: cy + 29, r: 13, fill: blend(Z.acc, BASE, 0.18) }, chipG);
+    icon(chipG, gx + 21.5, cy + 20.5, 17, n.icon || "i-gear", Z.acc);
+    txt(chipG, gx + 52, cy + 37, n.name, 25, blend(Z.acc, "#ffffff", 0.82), { w:"600" });
+    cy += 74;
   }
   colX += COLW + GUTTER;
 });
 
-const worldW = colX;
-const maxColBottom = Math.max(...colBottoms) + 60;
+const worldW = colX - GUTTER + 140;
+const maxColBottom = Math.max(...colBottoms) + 40;
 
-/* big column frames drawn behind content */
+/* column frames + banners + flow arrows (behind content) */
 {
-  let fx = 120;
-  DATA.columns.forEach(() => {
-    const r = box(world, fx - 30, COLTOP - 100, COLW, maxColBottom - COLTOP + 120, "none", "#21262d", 16);
-    world.insertBefore(r, world.firstChild);
+  let fx = 140;
+  DATA.columns.forEach((col, ci) => {
+    const Z = ZONES[col.id];
+    const frame = rect(bgLayer, fx - 34, COLTOP - 10, COLW, maxColBottom - COLTOP + 60, blend(Z.acc, BG, 0.028), blend(Z.acc, BORDER, 0.28), 20, { filter:"url(#sh)" });
+    /* banner */
+    rect(bgLayer, fx - 34, COLTOP - 10, COLW, 92, "url(#grb-" + col.id + ")", "none", 20);
+    rect(bgLayer, fx - 34, COLTOP + 58, COLW, 24, "url(#grb-" + col.id + ")", "none", 0);
+    el("circle", { cx: fx + 8, cy: COLTOP + 36, r: 25, fill: "rgba(10,14,20,0.35)" }, bgLayer);
+    icon(bgLayer, fx - 9, COLTOP + 19, 34, col.icon, "#ffffff");
+    txt(bgLayer, fx + 48, COLTOP + 30, String(ci + 1).padStart(2,"0") + " · " + col.tag.toUpperCase(), 15, "rgba(255,255,255,0.75)", { ls:"0.16em", w:"700" });
+    txt(bgLayer, fx + 48, COLTOP + 64, col.name, 40, "#ffffff", { w:"800" });
+    /* flow connector */
+    if (ci < DATA.columns.length - 1){
+      const x1 = fx - 34 + COLW, x2 = x1 + GUTTER;
+      const ym = COLTOP + 36;
+      const p = el("path", { d:`M${x1+8} ${ym} C ${x1 + GUTTER*0.4} ${ym-26}, ${x2 - GUTTER*0.4} ${ym-26}, ${x2-10} ${ym}`,
+        stroke: blend(Z.acc, "#ffffff", 0.4), "stroke-width":5, fill:"none", "marker-end":"url(#arr)" }, bgLayer);
+      p.classList.add("flowline");
+    }
     fx += COLW + GUTTER;
   });
+  const mk = el("marker", { id:"arr", viewBox:"0 0 10 10", refX:8, refY:5, markerWidth:5, markerHeight:5, orient:"auto-start-reverse" }, defs);
+  el("path", { d:"M0 0L10 5L0 10z", fill:"#9fb6d4" }, mk);
 }
 
 /* rails */
-let railY = maxColBottom + 80;
+let railY = maxColBottom + 120;
 for (const rail of DATA.rails){
-  const stroke = rail.tone === "sec" ? "#6e2b28" : "#4a3a6b";
-  const titleC = rail.tone === "sec" ? "#ff9b96" : C.purple;
-  box(world, 90, railY, worldW - 180, 320, C.surface, stroke, 14);
-  txt(world, 130, railY + 52, rail.name, 34, titleC, { w:"700" });
-  txt(world, 130, railY + 88, rail.desc, 17, C.muted);
+  const Z = ZONES[rail.id];
+  rect(bgLayer, 106, railY, worldW - 246, 340, blend(Z.acc, BG, 0.035), blend(Z.acc, BORDER, 0.3), 18, { filter:"url(#sh)" });
+  rect(bgLayer, 106, railY, 14, 340, Z.acc, "none", 7);
+  el("circle", { cx: 168, cy: railY + 56, r: 26, fill: blend(Z.acc, BASE, 0.18) }, world);
+  icon(world, 150, railY + 38, 36, rail.icon, Z.acc);
+  txt(world, 212, railY + 50, rail.name.toUpperCase(), 34, blend(Z.acc, "#ffffff", 0.85), { w:"800", ls:"0.06em" });
+  txt(world, 212, railY + 84, rail.desc, 17, MUT);
   const rg = lodGroup(world, 0.34);
-  const rw = (worldW - 180 - 80 - 3 * 30) / 4;
+  const rw = (worldW - 246 - 90 - 3 * 30) / 4;
   rail.nodes.forEach((n, i) => {
-    const rx = 130 + i * (rw + 30), ry = railY + 110;
-    box(rg, rx, ry, rw, 180, C.surface2, "#21262d", 8);
-    txt(rg, rx + 14, ry + 28, n.name, 18, C.colTitle, { w:"600" });
-    txt(rg, rx + 14, ry + 52, n.desc, 12.5, C.muted, { maxw: rw - 28 });
+    const rx = 150 + i * (rw + 30), ry = railY + 112;
+    const card = rect(rg, rx, ry, rw, 200, "url(#gr-" + rail.id + ")", blend(Z.acc, BORDER, 0.3), 12, { filter:"url(#sh2)" });
+    card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
+    el("circle", { cx: rx + 26, cy: ry + 26, r: 13, fill: blend(Z.acc, BASE, 0.18) }, rg);
+    icon(rg, rx + 17.5, ry + 17.5, 17, n.icon, Z.acc);
+    txt(rg, rx + 46, ry + 32, n.name, 18, TXT, { w:"650" });
+    txt(rg, rx + 16, ry + 60, n.desc, 12.5, MUT, { maxw: rw - 32 });
     if (n.l2){
       const g2 = lodGroup(rg, 2.1);
-      let my = ry + 100;
+      let my = ry + 112;
       n.l2.forEach(c => {
-        txt(g2, rx + 14, my, "▸ " + c[0] + " — " + c[1], 6, C.muted, { maxw: rw - 28 });
-        my += wrap("▸ " + c[0] + " — " + c[1], 6, rw - 28).length * 8 + 6;
+        txt(g2, rx + 16, my, "▸ " + c[0] + " — " + c[1], 6.2, MUT, { maxw: rw - 32 });
+        my += linesOf("▸ " + c[0] + " — " + c[1], 6.2, rw - 32) * 8.4 + 6;
       });
     }
   });
-  railY += 360;
+  railY += 380;
 }
 
 /* journeys */
-txt(world, 120, railY + 40, "JOURNEYS — THE PLATFORM AT WORK", 26, C.green, { w:"700", ls:"0.1em" });
 {
-  const jw = (worldW - 240 - 3 * 40) / 4;
+  el("circle", { cx: 128, cy: railY + 34, r: 6, fill: "#56d364" }, world);
+  txt(world, 148, railY + 42, "JOURNEYS — THE PLATFORM AT WORK", 26, "#7ee2a8", { w:"800", ls:"0.12em" });
+  const jw = (worldW - 280 - 3 * 40) / 4;
   DATA.journeys.forEach((j, i) => {
-    const jx = 120 + i * (jw + 40), jy = railY + 70;
-    box(world, jx, jy, jw, 300, C.surface, "#238636", 12);
-    txt(world, jx + 20, jy + 40, j.name, 24, C.green, { w:"700" });
-    txt(world, jx + 20, jy + 70, j.stats, 13, C.gold);
+    const jx = 140 + i * (jw + 40), jy = railY + 66;
+    const Z = ZONES.journey;
+    const card = rect(world, jx, jy, jw, 310, "url(#gr-journey)", blend(Z.acc, BORDER, 0.35), 14, { filter:"url(#sh)" });
+    card.classList.add("card"); card.style.setProperty("--acc", Z.acc);
+    el("circle", { cx: jx + 34, cy: jy + 38, r: 17, fill: blend(Z.acc, BASE, 0.2) }, world);
+    icon(world, jx + 23, jy + 27, 22, j.icon, Z.acc);
+    txt(world, jx + 62, jy + 45, j.name, 23, TXT, { w:"700" });
+    rect(world, jx + 20, jy + 66, jw - 40, 34, blend(Z.acc, BG, 0.08), "none", 8);
+    txt(world, jx + 34, jy + 88, j.stats, 13.5, GOLD, { w:"600" });
     const jg = lodGroup(world, 0.5);
-    txt(jg, jx + 20, jy + 104, j.desc, 13.5, C.muted, { maxw: jw - 40 });
+    txt(jg, jx + 22, jy + 128, j.desc, 13.5, MUT, { maxw: jw - 44 });
     if (j.link){
-      const a = el("a", { href: j.link.href, target: "_blank" }, jg);
+      const a = el("a", { href: j.link.href, target:"_blank" }, jg);
       const lg = el("g", { class:"clickable" }, a);
-      box(lg, jx + 20, jy + 232, jw - 40, 40, "#0d2818", "#238636", 8);
-      txt(lg, jx + jw/2, jy + 258, j.link.label, 14, C.green, { anchor:"middle", w:"600" });
+      rect(lg, jx + 20, jy + 244, jw - 40, 42, blend(Z.acc, BG, 0.12), Z.acc, 10);
+      txt(lg, jx + jw/2, jy + 271, j.link.label, 15, "#7ee2a8", { anchor:"middle", w:"650" });
     }
   });
 }
-const worldH = railY + 430;
 
-/* ═══════════════ viewport: pan & zoom ═══════════════ */
-let vb = { x: 0, y: 0, w: worldW };
+/* ═══════ viewport ═══════ */
+let vb = { x:0, y:0, w: worldW };
 const vw = () => wrapEl.clientWidth, vh = () => wrapEl.clientHeight;
 const kNow = () => vw() / vb.w;
-const KMIN_W = worldW * 1.15, KMAX = 16;
+const KMAX = 16;
 function apply(){
   const h = vb.w * vh() / vw();
-  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${h}`);
+  svg.setAttribute("viewBox", vb.x + " " + vb.y + " " + vb.w + " " + h);
   const k = kNow();
   updateLOD(k);
   const lvl = k < 0.34 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 7.5 ? "L3 · internals" : "L4 · the logs themselves";
-  document.getElementById("zoomlvl").textContent = `zoom ${(k).toFixed(2)}× — ${lvl}`;
+  document.getElementById("zoomlvl").textContent = "zoom " + k.toFixed(2) + "× — " + lvl;
 }
-function clampZoom(newW){ return Math.min(KMIN_W, Math.max(vw() / KMAX, newW)); }
-function zoomAt(px, py, factor){
-  const rect = wrapEl.getBoundingClientRect();
-  const mx = vb.x + (px - rect.left) / vw() * vb.w;
-  const my = vb.y + (py - rect.top) / vw() * vb.w;
-  const newW = clampZoom(vb.w / factor);
-  const f = newW / vb.w;
-  vb.x = mx - (mx - vb.x) * f;
-  vb.y = my - (my - vb.y) * f;
-  vb.w = newW;
+const clampW = w => Math.min(worldW * 1.2, Math.max(vw() / KMAX, w));
+function zoomAt(px, py, f){
+  const r = wrapEl.getBoundingClientRect();
+  const mx = vb.x + (px - r.left) / vw() * vb.w;
+  const my = vb.y + (py - r.top) / vw() * vb.w;
+  const nw = clampW(vb.w / f);
+  const ff = nw / vb.w;
+  vb.x = mx - (mx - vb.x) * ff;
+  vb.y = my - (my - vb.y) * ff;
+  vb.w = nw;
   apply();
 }
 wrapEl.addEventListener("wheel", e => {
   e.preventDefault();
-  if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)){
+  if (e.ctrlKey || Math.abs(e.deltaY) >= Math.abs(e.deltaX))
     zoomAt(e.clientX, e.clientY, Math.pow(1.0018, -e.deltaY * (e.ctrlKey ? 4 : 1)));
-  } else { vb.x += e.deltaX * vb.w / vw(); apply(); }
-}, { passive: false });
+  else { vb.x += e.deltaX * vb.w / vw(); apply(); }
+}, { passive:false });
 let drag = null;
-wrapEl.addEventListener("pointerdown", e => { if (e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y, moved: false }; wrapEl.classList.add("dragging"); });
+wrapEl.addEventListener("pointerdown", e => { if (e.button !== 0) return; drag = { x:e.clientX, y:e.clientY, vx:vb.x, vy:vb.y }; wrapEl.classList.add("dragging"); });
 window.addEventListener("pointermove", e => {
   if (!drag) return;
-  const dx = (e.clientX - drag.x) * vb.w / vw(), dy = (e.clientY - drag.y) * vb.w / vw();
-  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
-  vb.x = drag.vx - dx; vb.y = drag.vy - dy; apply();
+  vb.x = drag.vx - (e.clientX - drag.x) * vb.w / vw();
+  vb.y = drag.vy - (e.clientY - drag.y) * vb.w / vw();
+  apply();
 });
 window.addEventListener("pointerup", () => { drag = null; wrapEl.classList.remove("dragging"); });
 wrapEl.addEventListener("dblclick", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, 2.2); });
-/* pinch */
 const touches = new Map();
-wrapEl.addEventListener("touchstart", e => { for (const t of e.changedTouches) touches.set(t.identifier, t); }, { passive: true });
+wrapEl.addEventListener("touchstart", e => { for (const t of e.changedTouches) touches.set(t.identifier, t); }, { passive:true });
 wrapEl.addEventListener("touchmove", e => {
   if (e.touches.length === 2){
     e.preventDefault();
@@ -757,31 +874,29 @@ wrapEl.addEventListener("touchmove", e => {
     }
     touches.set(a.identifier, a); touches.set(b.identifier, b);
   }
-}, { passive: false });
+}, { passive:false });
 wrapEl.addEventListener("touchend", e => { for (const t of e.changedTouches) touches.delete(t.identifier); });
-
-/* fly-to animation */
-let flyTimer = null;
+let flyRAF = null;
 function flyTo(x, y, w){
-  const target = { x, y, w: clampZoom(Math.max(w, vw() / KMAX)) };
+  const target = { x, y, w: clampW(w) };
   const start = { ...vb }, t0 = performance.now(), dur = 550;
-  cancelAnimationFrame(flyTimer);
-  (function step(now){
+  cancelAnimationFrame(flyRAF);
+  (function stepA(now){
     const p = Math.min(1, (now - t0) / dur), e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2;
     vb.x = start.x + (target.x - start.x) * e;
     vb.y = start.y + (target.y - start.y) * e;
     vb.w = start.w + (target.w - start.w) * e;
     apply();
-    if (p < 1) flyTimer = requestAnimationFrame(step);
+    if (p < 1) flyRAF = requestAnimationFrame(stepA);
   })(t0);
 }
-function fitAll(){ flyTo(-40, -20, worldW * 1.02); }
-document.getElementById("z-in").onclick = () => zoomAt(vw()/2 + wrapEl.getBoundingClientRect().left, vh()/2 + wrapEl.getBoundingClientRect().top, 1.5);
-document.getElementById("z-out").onclick = () => zoomAt(vw()/2 + wrapEl.getBoundingClientRect().left, vh()/2 + wrapEl.getBoundingClientRect().top, 1/1.5);
+function fitAll(){ flyTo(-60, -40, worldW * 1.04); }
+document.getElementById("z-in").onclick = () => { const r = wrapEl.getBoundingClientRect(); zoomAt(r.left + vw()/2, r.top + vh()/2, 1.5); };
+document.getElementById("z-out").onclick = () => { const r = wrapEl.getBoundingClientRect(); zoomAt(r.left + vw()/2, r.top + vh()/2, 1/1.5); };
 document.getElementById("z-fit").onclick = fitAll;
 document.addEventListener("keydown", e => { if (e.key === "Escape") fitAll(); });
 window.addEventListener("resize", apply);
-fitAll(); vb = { x: -40, y: -20, w: worldW * 1.02 }; apply();
+vb = { x:-60, y:-40, w: worldW * 1.04 }; apply();
 })();
 </script>
 </body>
