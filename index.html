@@ -1035,7 +1035,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") fitAll(); })
 window.addEventListener("resize", apply);
 /* minimap */
 const mmWrap = document.getElementById("minimap");
-const worldH = railY + 60;
+const worldH = railY + 440;
 const mmW = 212, mmScale = mmW / (worldW + 120), mmH = Math.round((worldH + 80) * mmScale);
 const mm = el("svg", { viewBox: "0 0 " + mmW + " " + mmH, width: mmW, height: mmH }, mmWrap);
 rect(mm, 0, 0, mmW, mmH, "#0a0e14", "none", 4);
