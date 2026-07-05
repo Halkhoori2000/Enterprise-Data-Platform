@@ -567,6 +567,8 @@ function playBtn(gp, x, y, label){
 
 /* —— deep: Kafka —— */
 function deepKafka(parent, x, y, w, Z){
+  const hintg = lodGroup(parent, 2.1, 4.2);
+  txt(hintg, x + w/2, y + 40, "▼ L3 · inside a cluster — keep zooming", 11, "rgba(230,237,243,0.5)", { anchor:"middle", w:"650" });
   const g3 = lodGroup(parent, 4.2);
   panel(g3, x, y, w, 262, "L3 · INSIDE A CLUSTER", Z.acc, "i-stream");
   let yy = y + 30;
@@ -579,7 +581,10 @@ function deepKafka(parent, x, y, w, Z){
     ["Connect workers","Connectors run as distributed tasks — sources in, sinks out."],
     ["UAT → PROD","Connector configs, topic standards, schemas promote like code."]], 6.6, 5.1, Z.acc) + 12;
 
-  const g4 = lodGroup(parent, 7.5);
+  const hint4 = lodGroup(parent, 2.1, 6.5);
+  rect(hint4, x, y + 272, w, 300, "rgba(86,211,100,0.04)", "rgba(86,211,100,0.25)", 8);
+  txt(hint4, x + w/2, y + 272 + 150, "▼ L4 · the commit log — keep zooming", 10, "rgba(126,226,168,0.75)", { anchor:"middle", w:"650" });
+  const g4 = lodGroup(parent, 6.5);
   const py = y + 272;
   panel(g4, x, py, w, 300, "L4 · INSIDE A PARTITION — THE COMMIT LOG", "#56d364", "i-stream");
   txt(g4, x + 10, py + 34, "The bottom of Kafka: an append-only log. Messages are numbered by offset and never modified — replication, consumers and exactly-once are built on that one idea.", 5.6, MUT, { maxw: w - 20 });
@@ -630,6 +635,8 @@ function deepKafka(parent, x, y, w, Z){
 
 /* —— deep: Delta —— */
 function deepDelta(parent, x, y, w, Z){
+  const hintg = lodGroup(parent, 2.1, 4.2);
+  txt(hintg, x + w/2, y + 40, "▼ L3 · the transaction log + time travel — keep zooming", 11, "rgba(230,237,243,0.5)", { anchor:"middle", w:"650" });
   const g = lodGroup(parent, 4.2);
   panel(g, x, y, w, 380, "L3 · INSIDE THE TRANSACTION LOG  (_delta_log/)", GOLD, "i-delta");
   txt(g, x + 10, y + 34, "A Delta table = parquet files + numbered JSON commits describing which files are the table at each version. Replay the log, get the state — that folder is the whole magic.", 5.6, MUT, { maxw: w - 20 });
@@ -704,6 +711,8 @@ function deepDelta(parent, x, y, w, Z){
 
 /* —— deep: Spark —— */
 function deepSpark(parent, x, y, w, Z){
+  const hintg = lodGroup(parent, 2.1, 4.2);
+  txt(hintg, x + w/2, y + 40, "▼ L3 · stages, shuffles, tasks — live — keep zooming", 11, "rgba(230,237,243,0.5)", { anchor:"middle", w:"650" });
   const g = lodGroup(parent, 4.2);
   panel(g, x, y, w, 325, "L3 · A JOB EXECUTING — STAGES, SHUFFLES, TASKS", Z.acc, "i-spark");
   txt(g, x + 10, y + 34, "The driver splits the plan into stages at shuffle boundaries — where data must regroup across the cluster. Each stage runs as parallel tasks, one per partition.", 5.6, MUT, { maxw: w - 20 });
@@ -989,7 +998,7 @@ function apply(){
   svg.setAttribute("viewBox", vb.x + " " + vb.y + " " + vb.w + " " + h);
   const k = kNow();
   updateLOD(k);
-  const lvl = k < 0.5 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 7.5 ? "L3 · internals" : "L4 · the logs themselves";
+  const lvl = k < 0.5 ? "L0 · landscape" : k < 2.1 ? "L1 · planes & tools" : k < 4.2 ? "L2 · inside the tools" : k < 6.5 ? "L3 · internals" : "L4 · the logs themselves";
   document.getElementById("zoomlvl").textContent = "zoom " + k.toFixed(2) + "× — " + lvl;
   if (typeof updateMinimap === "function" && window.__mmReady) updateMinimap();
 }
