@@ -2,7 +2,7 @@
 
 *Work-derived model, fully generalized · 2025–2026*
 
-**[Explore the live model →](https://halkhoori2000.github.io/Data-Platform-Confluent-Kafka/)**
+**[Explore the live model →](https://halkhoori2000.github.io/Enterprise-Data-Platform/)**
 
 This is an interactive model of a real enterprise banking data platform — the kind that turns dozens of source systems, event streams, and years of files into governed, queryable data products. It reads like a real reference architecture: individual pieces — source systems, connectors, Kafka, ADF, the Databricks lakehouse with its medallion layers, serving and BI tools — connected by the actual data-flow arrows, with security and governance running underneath. Level buttons (L0–L4) choose the depth: the executive overview, the full estate, then inside any clicked piece — down to Kafka's commit log and Delta Lake's transaction log.
 
