@@ -314,6 +314,40 @@ def("jmth","journey","i-clock","How a delivery runs","discovery -> go-live","Eve
 def("marketplace","governance","i-bag","Catalog & marketplace","data as product","Datasets findable and requestable with owners, docs, and quality scores — shopping, not spelunking.",
  [["Data as product","Owned, documented, scored."]]);
 
+/* ═══════ L3 mechanics for more tools (makes the L3 level meaningful across the diagram) ═══════ */
+Object.assign(NODES.connect, { deep:3, l3:[
+  ["Distributed workers","A connector splits into tasks spread over a worker cluster; the group rebalances tasks when a worker joins or dies."],
+  ["Offsets & delivery","Source connectors track their position in the source; restarts resume there — at-least-once by default, exactly-once with transactions."],
+  ["Converters & SMTs","Converters (Avro/JSON/Protobuf) serialize records; single-message transforms reshape them in flight without custom code."]]});
+Object.assign(NODES.adf, { deep:3, l3:[
+  ["Lookup returns the worklist","A Lookup queries the control table; ForEach fans out over the rows, each running a Copy in parallel up to a bounded batch count."],
+  ["Copy activity internals","Source + sink datasets with a translator; large moves stage through blob; fault tolerance skips bad rows to a log instead of failing."],
+  ["Triggers & Integration Runtime","Schedule / tumbling-window / event triggers start pipelines; the IR (Azure or self-hosted) is the compute that actually moves the bytes."]]});
+Object.assign(NODES.autoloader, { deep:3, l3:[
+  ["cloudFiles source","A structured-streaming source over a path; each micro-batch picks up only files it hasn't seen before."],
+  ["Checkpointed state","Processed files are recorded in a durable checkpoint (RocksDB) — restarts resume exactly where they stopped, never double-loading."],
+  ["Notifications at scale","File-notification mode wires storage events to a queue, so it never re-lists a folder of millions of files."]]});
+Object.assign(NODES.watermark, { deep:3, l3:[
+  ["The high-water query","Each run reads the watermark (latest loaded period), loads only rows above it, then advances the mark — nothing old is re-touched."],
+  ["A control row per unit","Path, sheet, header row, target table, active flag — the loader reads its instructions from the table, never from hard-coded logic."],
+  ["Idempotent replay","Each unit overwrites its own target; re-running a batch produces the same result — safe to replay by construction."]]});
+Object.assign(NODES.etl, { deep:3, l3:[
+  ["Four component groups","Extract (adapters, triggers) → Clean (parse, standardise, dedup) → Transform (source-specific then common) → Load (keys, SCD, grain)."],
+  ["Metadata-driven","The framework reads mappings and rules from a metadata repository; onboarding a new source is configuration, not new code."],
+  ["Common services & rejects","Logging, audit, exceptions, archiving, parameterisation — written once, reused everywhere; failed records go to a quarantine store with reasons."]]});
+Object.assign(NODES.unity, { deep:3, l3:[
+  ["Metastore hierarchy","catalog → schema → table / volume / model; one regional metastore governs everything, grants cascading down the tree."],
+  ["Lineage from execution","Column-level lineage is captured as queries actually run — not hand-drawn, so it never drifts from reality."],
+  ["Everything is securable","Tables, files (volumes) and ML models are all first-class objects under the same ANSI-style grant language."]]});
+Object.assign(NODES.dbsql, { deep:3, l3:[
+  ["Serverless warehouses","Elastic SQL compute pools autoscale with concurrency and auto-suspend when idle — cost follows use, not clock time."],
+  ["Photon + caching","A vectorized engine plus result and disk caches make repeated dashboard queries near-instant."],
+  ["Catalog-governed","The warehouse honours Unity Catalog grants — a query returns exactly what its runner is permitted to see."]]});
+Object.assign(NODES.powerbi, { deep:3, l3:[
+  ["Semantic model","Measures, relationships and hierarchies defined once in DAX; every report reads the same definitions."],
+  ["Import vs DirectQuery","Import caches an extract for speed; DirectQuery pushes queries live to the lakehouse for freshness — chosen per dataset."],
+  ["Row-level security","Roles filter the model by the viewer's identity — one report, each user sees only their slice."]]});
+
 /* ═══════ layout: individual pieces ═══════ */
 const P = {}, LV1 = new Set();
 function piece(id, x, y, w, h, opts){
@@ -552,6 +586,10 @@ function openDrawer(id, depth){
   h += `<div class="d-sec">L2 · HOW IT'S ORGANIZED</div><div class="d-cards">` +
        d.l2.map(c => `<div class="d-card"><h5 style="color:${acc}">${esc(c[0])}</h5><p>${esc(c[1])}</p></div>`).join("") + `</div>`;
   if (d.link) h += `<div class="d-note"><a href="${d.link.href}" target="_blank" style="color:#7ee2a8">${esc(d.link.label)}</a></div>`;
+  if (depth >= 3 && d.l3){
+    h += `<div class="d-sec">L3 · MECHANICS</div><div class="d-cards">` +
+      d.l3.map(c => `<div class="d-card"><h5 style="color:${acc}">${esc(c[0])}</h5><p>${esc(c[1])}</p></div>`).join("") + `</div>`;
+  }
   if (depth >= 3 && id === "kafka"){
     h += `<div class="d-sec">L3 · INSIDE A CLUSTER</div><div class="d-cards">
       <div class="d-card"><h5 style="color:${acc}">Brokers</h5><p>Each broker hosts many partitions — spread a topic and no machine limits the stream.</p></div>
