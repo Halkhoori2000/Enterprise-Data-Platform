@@ -455,6 +455,12 @@ function edge(a, b, opts){
   const hideAtL0 = opts.lv === 1 || LV1.has(a) || LV1.has(b);
   if (opts.l0) p.dataset.l0 = 1;
   else if (hideAtL0) p.dataset.lv = 1;
+  if (opts.primary){
+    const dot = el("circle", { r: 4.5, fill: opts.c || "#8aa0bd" }, edgeLayer);
+    const am = el("animateMotion", { dur: "2.6s", repeatCount: "indefinite", rotate: "auto", path: d, keyPoints:"0;1", keyTimes:"0;1", calcMode:"linear" }, dot);
+    if (opts.dur) am.setAttribute("dur", opts.dur);
+    if (hideAtL0 && !opts.l0) dot.dataset.lv = 1;
+  }
   if (opts.label && !opts.v){
     const lx = (A.x + A.w + (opts.mid != null ? opts.mid : (A.x + A.w + B.x)/2)) / 2;
     const lt = txt(edgeLayer, lx, A.y + A.h/2 + (opts.ao || 0) - 8, opts.label, 10.5, opts.c || "#5f7391", { anchor:"middle", w:"650" });
@@ -464,13 +470,13 @@ function edge(a, b, opts){
 }
 const CI = blend(Z.ingest, "#5f7391", 0.5), CP = blend(Z.process, "#5f7391", 0.5), CS = blend(Z.serve, "#5f7391", 0.5);
 edge("core", "connect", { mid: 480, c: CI, label:"CDC" });
-edge("core", "kafka", { mid: 480, c: CI, label:"CDC stream", l0:true });
+edge("core", "kafka", { mid: 480, c: CI, label:"CDC stream", l0:true, primary:true });
 edge("cards", "connect", { mid: 468, c: CI, lv:1 });
 edge("payments", "connect", { mid: 456, c: CI, lv:1 });
 edge("channels", "connect", { mid: 444, c: CI, lv:1 });
 edge("connect", "kafka", { v:true, c: CI, lv:1 });
 edge("registry", "kafka", { v:true, dash:true, c: CI, lv:1 });
-edge("kafka", "bronze", { c: CI, wd: 3, mid: 1000, label:"sink connectors" });
+edge("kafka", "bronze", { c: CI, wd: 3, mid: 1000, label:"sink connectors", primary:true });
 edge("lending", "adf", { mid: 500, c: CI, lv:1 });
 edge("treasury", "adf", { mid: 488, c: CI, lv:1 });
 edge("crm", "adf", { mid: 476, c: CI, lv:1 });
@@ -479,13 +485,13 @@ edge("partner", "autoloader", { mid: 452, c: CI, lv:1 });
 edge("watermark", "adf", { v:true, dash:true, c: CI, lv:1 });
 edge("adf", "bronze", { c: CI, wd: 3, mid: 1035, bo: 10, label:"watermarked copy" });
 edge("autoloader", "bronze", { c: CI, mid: 1065, bo: 20, lv:1 });
-edge("bronze", "silver", { c: CP, wd: 3.2 });
-edge("silver", "gold", { c: CP, wd: 3.2 });
+edge("bronze", "silver", { c: CP, wd: 3.2, primary:true });
+edge("silver", "gold", { c: CP, wd: 3.2, primary:true });
 edge("delta", "bronze", { v:true, dash:true, c: CP, lv:1 });
 edge("adls", "silver", { v:true, dash:true, c: CP, lv:1 });
-edge("gold", "dbsql", { c: CP, wd: 3, label:"governed marts" });
+edge("gold", "dbsql", { c: CP, wd: 3, label:"governed marts", primary:true });
 edge("gold", "sharing", { c: CP, mid: 2300, bo: 0, lv:1 });
-edge("dbsql", "powerbi", { c: CS, wd: 3 });
+edge("dbsql", "powerbi", { c: CS, wd: 3, primary:true });
 edge("dbsql", "genie", { c: CS, mid: 2790, lv:1 });
 edge("sharing", "endpoints", { v:true, c: CS, lv:1 });
 edge("dbsql", "ds", { c: CS, mid: 2830, lv:1 });
