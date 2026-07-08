@@ -628,7 +628,14 @@ edge("dbsql", "ds", { c: CS, mid: 2830, lv:1 });
 const worldW = 3320, worldH = 1600;
 
 /* ═══════ levels ═══════ */
-let level = 1, selected = null;
+let level = 1, selected = null, curDepth = 2;
+// keep the URL in sync so a specific view (tool + level) is shareable and survives reload
+function syncURL(){
+  const p = new URLSearchParams();
+  p.set("lv", level);
+  if (selected){ p.set("node", selected); p.set("depth", curDepth); }
+  try { history.replaceState(null, "", "?" + p.toString()); } catch(_){}
+}
 function maxDepth(id){ const d = NODES[id]; return d.deepest ? 4 : d.deep ? 3 : 2; }
 function setLevel(n){
   level = n;
@@ -652,13 +659,14 @@ function select(id, depth){
   const p = P[id];
   if (p) flyTo(p.x + p.w/2 - vb.w*0.33, Math.max(-20, p.y + p.h/2 - (vb.w*vh()/vw())/2), vb.w);
 }
-function closeDrawer(){ drawer.classList.remove("open"); document.querySelectorAll(".piece.selected").forEach(p => p.classList.remove("selected")); selected = null; }
+function closeDrawer(){ drawer.classList.remove("open"); document.querySelectorAll(".piece.selected").forEach(p => p.classList.remove("selected")); selected = null; syncURL(); }
 $("#d-close").addEventListener("click", closeDrawer);
 document.querySelectorAll("#d-tabs button").forEach(b => b.addEventListener("click", () => { if (!b.disabled && selected) openDrawer(selected, +b.dataset.d); }));
 
 function openDrawer(id, depth){
   const d = NODES[id], acc = Z[d.zone];
   depth = Math.min(depth || 2, maxDepth(id));
+  curDepth = depth; syncURL();
   drawer.classList.add("open");
   $("#d-ic").style.background = blend(acc, SURF, 0.22);
   $("#d-ic").innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${acc}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${document.getElementById(d.icon).innerHTML}</svg>`;
