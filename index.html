@@ -276,7 +276,7 @@ def("gold","process","i-layers","Gold","business marts","Metrics, aggregates, co
  [["Built for questions","Facts and dimensions shaped for the business."],["Compliance-grade","Lineage from every figure back to source."]]);
 def("spark","process","i-burst","Spark + Photon","lazy DAG · vectorized","Describe the whole job, execute lazily in parallel tasks. Photon runs the same plans on a vectorized C++ engine. L3 shows a job executing live.",
  [["Driver & executors","One brain, many hands across machines."],["Lazy → DAG","Nothing runs until an action forces it — optimized as one."],["Stages & shuffles","The DAG splits where data regroups — the expensive part."],["Photon","Same API, several times faster on SQL work."]],
- { deep:3 });
+ { deep:3, deepest:4 });
 def("dlt","process","i-layers","Delta Live Tables","declarative + expectations","Pipelines declared, not scripted — DLT works out order, parallelism, retries. Quality rules live inside the pipeline.",
  [["Declared, not scripted","State what each table should be."],["Expectations","Warn, drop, or fail — metrics per run, per rule."],["Computed lineage","The pipeline diagram is generated, never drawn."]]);
 def("workflows","process","i-gear","Workflows","jobs · retries · alerts","The operational wrapper: task graphs, schedules, right-sized job clusters, and failures that are never silent.",
@@ -677,6 +677,7 @@ function openDrawer(id, depth){
     b.disabled = dep > maxDepth(id);
     b.classList.toggle("active", dep === depth);
     if (dep === 3) b.textContent = id === "delta" ? "L3 · the log" : id === "spark" ? "L3 · a job runs" : id === "silver" ? "L3 · the flow" : "L3 · mechanics";
+    if (dep === 4) b.textContent = id === "spark" ? "L4 · the shuffle" : "L4 · the log";
   });
   const esc = s => String(s).replace(/</g,"&lt;");
   let h = `<div class="d-desc">${esc(d.desc)}</div>`;
@@ -744,6 +745,17 @@ function openDrawer(id, depth){
         <div class="sp-st" id="sp2"><h6>2 · join ⇄</h6><div class="sp-tasks"></div></div>
         <div class="sp-st" id="sp3"><h6>3 · aggregate</h6><div class="sp-tasks"></div></div>
       </div><div class="sp-note" id="sp-note">Two shuffles, eighteen tasks — Photon executes each on vectorized batches.</div>`;
+  }
+  if (depth >= 4 && id === "spark"){
+    h += `<div class="d-sec">L4 · INSIDE A SHUFFLE</div>
+      <div class="d-note">A shuffle is where two stages meet — a physical redistribution of rows across the cluster by key. It's where most of a job's time (and pain) lives.</div>
+      <div class="d-cards">
+        <div class="d-card"><h5 style="color:${acc}">Map side — write</h5><p>Each task partitions its output by the target key (hash/range) and writes sorted shuffle blocks to local disk — one region per downstream task.</p></div>
+        <div class="d-card"><h5 style="color:${acc}">Reduce side — fetch</h5><p>Each downstream task pulls its blocks from every mapper over the network, merges them, then runs the join or aggregate.</p></div>
+        <div class="d-card"><h5 style="color:${acc}">Spill &amp; skew</h5><p>A partition over memory spills to disk; one hot key makes a single task huge — salting or adaptive query execution (AQE) splits it.</p></div>
+        <div class="d-card"><h5 style="color:${acc}">Codegen &amp; Photon</h5><p>Whole-stage codegen fuses operators into tight loops; Photon replaces those with vectorized columnar kernels — same plan, far fewer CPU cycles.</p></div>
+      </div>
+      <div class="d-note" style="margin-top:12px"><b>Why it matters:</b> the fastest pipelines minimize shuffles — filter early, broadcast small tables, and partition on the join key so rows are already where they need to be.</div>`;
   }
   $("#d-body").innerHTML = h;
   wireDemos(id, depth);
