@@ -123,12 +123,12 @@
 <div class="disclosure">🔒 Generalized model — ideas, architecture and technology only. No proprietary systems, names, or data.</div>
 <div id="stage-wrap">
   <div id="errbar"></div>
-  <div id="levels">
-    <button data-lv="0"><b>L0</b>overview</button>
-    <button data-lv="1"><b>L1</b>all tools</button>
-    <button data-lv="2"><b>L2</b>inside a tool</button>
-    <button data-lv="3"><b>L3</b>mechanics</button>
-    <button data-lv="4"><b>L4</b>the logs</button>
+  <div id="levels" title="Tip: press keys 0–4 to jump levels">
+    <button data-lv="0" title="Overview — key 0"><b>L0</b>overview</button>
+    <button data-lv="1" title="All tools — key 1"><b>L1</b>all tools</button>
+    <button data-lv="2" title="Inside the selected tool — key 2"><b>L2</b>inside a tool</button>
+    <button data-lv="3" title="Mechanics of the selected tool — key 3"><b>L3</b>mechanics</button>
+    <button data-lv="4" title="The logs (Kafka, Delta) — key 4"><b>L4</b>the logs</button>
   </div>
   <div class="hud tr">
     <button class="hudbtn" id="z-in">＋</button>
@@ -879,7 +879,11 @@ $("#z-in").onclick = () => { const r = wrapEl.getBoundingClientRect(); zoomAt(r.
 $("#z-out").onclick = () => { const r = wrapEl.getBoundingClientRect(); zoomAt(r.left + vw()/2, r.top + vh()/2, 1/1.4); };
 $("#z-fit").onclick = fitAll;
 $("#z-legend").onclick = () => { const L = $("#legend"); L.style.display = L.style.display === "block" ? "none" : "block"; };
-document.addEventListener("keydown", e => { if (e.key === "Escape"){ if (drawer.classList.contains("open")) closeDrawer(); else fitAll(); } });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ if (drawer.classList.contains("open")) closeDrawer(); else fitAll(); return; }
+  // number keys 0–4 jump levels (2–4 open the current tool at that depth)
+  if (/^[0-4]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); setLevel(+e.key); }
+});
 window.addEventListener("resize", apply);
 
 /* ═══════ tour ═══════ */
