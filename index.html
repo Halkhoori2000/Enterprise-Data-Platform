@@ -582,8 +582,37 @@ function rail(y, zone, name, ic, ids){
 rail(1050, "security", "Security", "i-shield", ["entra","keyvault","rbac","network"]);
 rail(1192, "governance", "Governance", "i-book", ["unity","dq","mapping","marketplace"]);
 
+/* ═══════ what it powers — business outcomes (the payoff of the whole pipeline) ═══════ */
+function outcomesRow(y){
+  const acc = "#eac54f";  // gold = business value
+  el("rect", { x:100, y, width:3140, height:112, rx:14, fill: blend(acc, BG, 0.05), stroke: blend(acc, "#2b3444", 0.5), "stroke-width":1.2 }, edgeLayer);
+  el("rect", { x:100, y, width:8, height:112, rx:4, fill:acc }, edgeLayer);
+  icon(world, 128, y+22, 22, "i-bolt", acc);
+  txt(world, 162, y+34, "WHAT IT POWERS", 15, blend(acc,"#ffffff",0.85), { w:"800", ls:"0.1em" });
+  txt(world, 162, y+56, "business outcomes", 11, blend(acc,"#ffffff",0.4));
+  const OUT = [
+    ["i-shield","Fraud & AML detection","real-time scoring on streaming txns"],
+    ["i-person","Customer 360 / CRM","one conformed view per customer"],
+    ["i-check","Regulatory & risk reporting","every figure traced to source"],
+    ["i-card","Credit decisioning","governed features for risk models"],
+    ["i-genie","Personalization","behavioural signals → targeted offers"],
+    ["i-bars","Operational dashboards","self-service BI on governed marts"],
+  ];
+  const n = OUT.length, rpw = 400, rstart = 560, rend = 3200, rstep = (rend - rstart - rpw) / (n - 1);
+  OUT.forEach((o, i) => {
+    const cx = rstart + i*rstep, cy = y+24, cw = rpw, ch = 64, ir = 12;
+    const g = el("g", {}, world);
+    el("rect", { x:cx, y:cy, width:cw, height:ch, rx:10, fill: blend(acc, SURF, 0.06), stroke: blend(acc, "#2b3444", 0.5), "stroke-width":1 }, g);
+    el("rect", { x:cx+12, y:cy+ch/2-ir, width:ir*2, height:ir*2, rx:7, fill: blend(acc, SURF, 0.2) }, g);
+    icon(g, cx+12+ir-7.5, cy+ch/2-7.5, 15, o[0], acc);
+    txt(g, cx+44, cy+27, o[1], 13, TXT, { w:"700" });
+    txt(g, cx+44, cy+47, o[2], 10, blend(acc,"#ffffff",0.5));
+  });
+}
+outcomesRow(1330);
+
 /* journeys */
-label(100, 1382, "Journeys — the platform at work", Z.journey);
+label(100, 1490, "Journeys — the platform at work", Z.journey);
 const JOURNEYS = [
   { icon:"i-file", name:"Historic Data Loading", stats:"535 sheets · 8 systems · 41+ GB · ~2-hour run",
     desc:"Manual Excel history standardised into governed gold tables — ADF, notebooks, watermarks.",
@@ -596,7 +625,7 @@ const JOURNEYS = [
     desc:"Follow one payment across the map, tool by tool.", tour:true },
 ];
 JOURNEYS.forEach((j, i) => {
-  const jx = 100 + i * 800, jy = 1402, jw = 740, jh = 132;
+  const jx = 100 + i * 800, jy = 1510, jw = 740, jh = 132;
   const g = el("g", { class:"piece clickable", tabindex:"0", role:"button" }, pieceLayer);
   g.setAttribute("aria-label", `${j.name}. ${j.desc}${j.tour ? " Starts the guided tour." : j.link ? " Opens the case study." : " Opens details."}`);
   el("rect", { x:jx, y:jy, width:jw, height:jh, rx:14, fill: blend(Z.journey, SURF, 0.06), stroke: blend(Z.journey, "#2b3444", 0.5), "stroke-width":1.2, class:"pbg" }, g);
@@ -675,7 +704,7 @@ edge("dbsql", "genie", { c: CS, mid: 2790, lv:1 });
 edge("sharing", "endpoints", { v:true, c: CS, lv:1 });
 edge("dbsql", "ds", { c: CS, mid: 2830, lv:1 });
 
-const worldW = 3320, worldH = 1600;
+const worldW = 3320, worldH = 1730;
 
 /* ═══════ levels ═══════ */
 let level = 1, selected = null, curDepth = 2;
