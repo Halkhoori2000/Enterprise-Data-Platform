@@ -24,6 +24,8 @@
   .piece rect.pbg { transition: stroke-width 0.12s; }
   .piece:hover rect.pbg { stroke-width: 2; }
   .piece.selected rect.pbg { stroke-width: 2.6; }
+  .piece:focus { outline: none; }
+  .piece:focus-visible rect.pbg { stroke: #9ecbff; stroke-width: 2.8; }
   #levels { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; gap: 6px;
     background: rgba(16,21,31,0.94); border: 1px solid var(--border); border-radius: 12px; padding: 6px; }
   #levels button { border: 1px solid transparent; background: transparent; color: var(--muted); font-family: inherit;
@@ -476,24 +478,30 @@ Object.assign(NODES.marketplace, { deep:3, l3:[
 /* ═══════ layout: individual pieces ═══════ */
 const P = {}, LV1 = new Set();
 const DEMOS = new Set(["kafka", "delta", "spark", "silver"]);  // pieces with a runnable live demo inside
+let lastPiece = null;  // the piece a keyboard user activated — focus returns here when the drawer closes
 function piece(id, x, y, w, h, opts){
   if (opts && opts.lv === 1) LV1.add(id);
   opts = opts || {};
   const d = NODES[id], acc = Z[d.zone];
   w = w || 250; h = h || 64;
   P[id] = { x, y, w, h };
-  const g = el("g", { class:"piece clickable" }, pieceLayer);
+  const dm = DEMOS.has(id);
+  const g = el("g", { class:"piece clickable", tabindex:"0", role:"button" }, pieceLayer);
   g.dataset.id = id;
   if (opts.lv) g.dataset.lv = opts.lv;
+  g.setAttribute("aria-label", `${d.name}${d.sub ? ", " + d.sub : ""} — ${d.zone}` +
+    `${d.deep ? ", opens detail to " + (d.deepest ? "L4" : "L3") : ", opens detail"}${dm ? " with a live demo" : ""}`);
   el("rect", { x, y, width:w, height:h, rx:12, fill: blend(acc, SURF, opts.strong ? 0.16 : 0.07), stroke: blend(acc, "#2b3444", 0.55), "stroke-width":1.2, class:"pbg" }, g);
   const ir = 13;
   el("rect", { x:x+12, y:y+h/2-ir, width:ir*2, height:ir*2, rx:8, fill: blend(acc, SURF, 0.22) }, g);
   icon(g, x+12+ir-8.5, y+h/2-8.5, 17, d.icon, acc);
   txt(g, x+46, y+h/2 - (d.sub ? 4 : -5.5), d.name, 17, TXT, { w:"650" });
   if (d.sub) txt(g, x+46, y+h/2+15, d.sub, 11.5, blend(acc, "#ffffff", 0.55));
-  if (d.deep){ const dm = DEMOS.has(id);
-    txt(g, x+w-10, y+16, (dm ? "▶ " : "→ ") + (d.deepest ? "L4" : "L3"), 10, dm ? blend(acc, "#ffffff", 0.28) : acc, { anchor:"end", w:"800" }); }
-  g.addEventListener("click", e => { e.stopPropagation(); select(id); });
+  if (d.deep)
+    txt(g, x+w-10, y+16, (dm ? "▶ " : "→ ") + (d.deepest ? "L4" : "L3"), 10, dm ? blend(acc, "#ffffff", 0.28) : acc, { anchor:"end", w:"800" });
+  const act = e => { e.stopPropagation(); select(id); };
+  g.addEventListener("click", act);
+  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); lastPiece = g; act(e); const c = $("#d-close"); if (c) c.focus(); } });
   return g;
 }
 function label(x, y, s, color){ txt(world, x, y, s.toUpperCase(), 16.5, color || DIM, { w:"800", ls:"0.16em" }); }
@@ -589,7 +597,8 @@ const JOURNEYS = [
 ];
 JOURNEYS.forEach((j, i) => {
   const jx = 100 + i * 800, jy = 1402, jw = 740, jh = 132;
-  const g = el("g", { class:"piece clickable" }, pieceLayer);
+  const g = el("g", { class:"piece clickable", tabindex:"0", role:"button" }, pieceLayer);
+  g.setAttribute("aria-label", `${j.name}. ${j.desc}${j.tour ? " Starts the guided tour." : j.link ? " Opens the case study." : " Opens details."}`);
   el("rect", { x:jx, y:jy, width:jw, height:jh, rx:14, fill: blend(Z.journey, SURF, 0.06), stroke: blend(Z.journey, "#2b3444", 0.5), "stroke-width":1.2, class:"pbg" }, g);
   el("rect", { x:jx+14, y:jy+16, width:34, height:34, rx:10, fill: blend(Z.journey, SURF, 0.2) }, g);
   icon(g, jx+21, jy+23, 20, j.icon, Z.journey);
@@ -599,7 +608,10 @@ JOURNEYS.forEach((j, i) => {
   if (j.link) txt(g, jx+16, jy+116, j.link.label, 12.5, "#7ee2a8", { w:"650" });
   if (j.node) txt(g, jx+16, jy+116, "▸ open details", 12.5, "#7ee2a8", { w:"650" });
   if (j.tour) txt(g, jx+16, jy+116, "▶ start the guided tour", 12.5, "#7ee2a8", { w:"650" });
-  g.addEventListener("click", () => { if (j.tour) startTour(); else if (j.node) openDrawer(j.node, 2); else if (j.link) window.open(j.link.href, "_blank"); });
+  const act = () => { if (j.tour) startTour(); else if (j.node) openDrawer(j.node, 2); else if (j.link) window.open(j.link.href, "_blank"); };
+  g.addEventListener("click", act);
+  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); act(); lastPiece = g;
+    const t = j.tour ? $("#tour-next") : j.node ? $("#d-close") : null; if (t) t.focus(); } });
 });
 
 /* ═══════ edges ═══════ */
@@ -697,7 +709,8 @@ function select(id, depth){
   const p = P[id];
   if (p) flyTo(p.x + p.w/2 - vb.w*0.33, Math.max(-20, p.y + p.h/2 - (vb.w*vh()/vw())/2), vb.w);
 }
-function closeDrawer(){ drawer.classList.remove("open"); document.querySelectorAll(".piece.selected").forEach(p => p.classList.remove("selected")); selected = null; syncURL(); }
+function closeDrawer(){ drawer.classList.remove("open"); document.querySelectorAll(".piece.selected").forEach(p => p.classList.remove("selected")); selected = null; syncURL();
+  if (lastPiece){ const p = lastPiece; lastPiece = null; try { p.focus(); } catch(_){} } }
 $("#d-close").addEventListener("click", closeDrawer);
 $("#d-link").addEventListener("click", async () => {
   const btn = $("#d-link");
@@ -970,7 +983,8 @@ function tourStep(){
 }
 function nextStep(){ ti++; if (ti >= TOUR.length) return endTour(); tourStep(); }
 function startTour(){ closeDrawer(); $("#tour").style.display = "block"; ti = -1; nextStep(); }
-function endTour(){ clearTimeout(tt); $("#tour").style.display = "none"; ti = -1; document.querySelectorAll(".piece.selected").forEach(x => x.classList.remove("selected")); fitAll(); }
+function endTour(){ clearTimeout(tt); $("#tour").style.display = "none"; ti = -1; document.querySelectorAll(".piece.selected").forEach(x => x.classList.remove("selected")); fitAll();
+  if (lastPiece){ const p = lastPiece; lastPiece = null; try { p.focus(); } catch(_){} } }
 $("#tour-next").addEventListener("click", nextStep);
 $("#tour-end").addEventListener("click", endTour);
 
